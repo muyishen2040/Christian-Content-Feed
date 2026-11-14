@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
     ...(params.has("limit") ? { limit: params.get("limit") } : {}),
   });
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid pagination parameters" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid pagination parameters" },
+      { status: 400 },
+    );
   }
   try {
     const data = await new MockApiClient().getFeed(parsed.data);
