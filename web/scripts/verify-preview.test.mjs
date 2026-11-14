@@ -11,11 +11,12 @@ test("valid preview checks HTTPS landing page without secrets", async () => {
     return new Response(html, { status: 200 });
   };
   assert.equal(await verifyPreview({
-    url: "https://preview.example.com/some-path",
+    url: "https://project-git-review-owner.vercel.app/some-path",
     bypassToken: "dummy",
+    allowedHostSuffix: "-owner.vercel.app",
     fetcher,
   }), true);
-  assert.equal(received.url, "https://preview.example.com/");
+  assert.equal(received.url, "https://project-git-review-owner.vercel.app/");
   assert.equal(received.headers["x-vercel-protection-bypass"], "dummy");
 });
 
@@ -33,4 +34,16 @@ test("does not accept access-denied or wrong-page responses", async () => {
     url: "https://preview.example.com",
     fetcher: async () => new Response("sign in", { status: 200 }),
   }));
+});
+
+
+test("bypass token never goes to an unapproved host", async () => {
+  let called = false;
+  await assert.rejects(() => verifyPreview({
+    url: "https://attacker.vercel.app",
+    bypassToken: "dummy",
+    allowedHostSuffix: "-owner.vercel.app",
+    fetcher: async () => { called = true; return new Response(html); },
+  }));
+  assert.equal(called, false);
 });
