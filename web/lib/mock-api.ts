@@ -4,8 +4,8 @@ import {
   type ProfileInput, type ProfileResponse, type SafetyResponse,
   type SavedResponse, feedbackRequestSchema, feedQuerySchema,
   profileInputSchema,
-} from "./contracts";
-import { mockStories } from "./mock-data";
+} from "./contracts.ts";
+import { mockStories } from "./mock-data.ts";
 
 type FeedbackState = { reaction: "interested" | "not_for_me" | null; saved: boolean };
 const emptyState = (): FeedbackState => ({ reaction: null, saved: false });
