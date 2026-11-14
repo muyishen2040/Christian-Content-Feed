@@ -13,7 +13,7 @@ test("valid preview checks HTTPS landing page without secrets", async () => {
   assert.equal(await verifyPreview({
     url: "https://project-git-review-owner.vercel.app/some-path",
     bypassToken: "dummy",
-    allowedHostSuffix: "-owner.vercel.app",
+    allowedHost: "project-git-review-owner.vercel.app",
     fetcher,
   }), true);
   assert.equal(received.url, "https://project-git-review-owner.vercel.app/");
@@ -42,7 +42,7 @@ test("bypass token never goes to an unapproved host", async () => {
   await assert.rejects(() => verifyPreview({
     url: "https://attacker.vercel.app",
     bypassToken: "dummy",
-    allowedHostSuffix: "-owner.vercel.app",
+    allowedHost: "project-git-review-owner.vercel.app",
     fetcher: async () => { called = true; return new Response(html); },
   }));
   assert.equal(called, false);
