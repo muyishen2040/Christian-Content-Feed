@@ -21,7 +21,6 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck
-      - run: node --test scripts/verify-preview.test.mjs
       - run: npm run build
   python:
     runs-on: ubuntu-latest

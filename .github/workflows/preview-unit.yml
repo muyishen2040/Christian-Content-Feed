@@ -1,0 +1,22 @@
+name: Preview smoke unit tests
+
+on:
+  pull_request:
+    paths:
+      - "web/scripts/verify-preview.mjs"
+      - "web/scripts/verify-preview.test.mjs"
+      - ".github/workflows/preview-unit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test web/scripts/verify-preview.test.mjs
