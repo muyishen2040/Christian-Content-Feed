@@ -6,7 +6,11 @@ export default function FeedPage() {
   return (
     <div className="app-shell">
       <header className="feed-header">
-        <Link className="feed-wordmark" href="/" aria-label="見證故事，探索動態">
+        <Link
+          className="feed-wordmark"
+          href="/"
+          aria-label="見證故事，探索動態"
+        >
           <span className="wordmark-line" aria-hidden="true" />
           見證故事
         </Link>
