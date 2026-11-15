@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "fastapi",
+  "buildCommand": "python prepare_model.py",
+  "functions": {
+    "app.py": {
+      "includeFiles": "model_assets/**",
+      "excludeFiles": "{tests/**,evaluation/**}"
+    }
+  }
+}

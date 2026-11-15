@@ -8,6 +8,6 @@ See [local setup](docs/setup.md). Use npm for the web app and Python 3.12 for th
 | --- | --- |
 | `web/` | Next.js frontend |
 | `pipeline/` | Future content import pipeline and example fixture |
-| `ml-service/` | FastAPI embedding service skeleton |
+| `ml-service/` | Local FastAPI embedding service and model evaluation |
 | `supabase/` | Future shared database configuration and migrations |
 | `docs/` | Collaboration and setup documentation |

@@ -25,15 +25,9 @@ python -m venv .venv
 Activate it with `source .venv/bin/activate` on macOS/Linux or `.venv\Scripts\Activate.ps1` in PowerShell. Then run:
 
 ```sh
-python -m pip install -r pipeline/requirements.txt -r ml-service/requirements.txt
+python -m pip install -r pipeline/requirements.txt -r ml-service/requirements.txt -r ml-service/requirements-test.txt
 python -m pytest pipeline/tests
 python -m pytest ml-service/tests
 ```
 
-To start the placeholder ML service, run from `ml-service/`:
-
-```sh
-python -m uvicorn app:app --reload
-```
-
-The health endpoint is http://localhost:8000/health. There is no embedding model or ingestion implementation yet. `.env.example` documents future configuration; copying it is not required for this scaffold. Never commit credentials or personal descriptions.
+The embedding service requires additional model dependencies and a locally cached BGE model. See [embedding service setup](embedding-service.md) for local startup, authentication, and the work remaining before deployment. The content importer is not yet implemented. Never commit credentials or personal descriptions.
