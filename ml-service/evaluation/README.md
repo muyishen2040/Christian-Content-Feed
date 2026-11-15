@@ -4,7 +4,7 @@ This experiment compares `BAAI/bge-small-zh-v1.5` and `intfloat/multilingual-e5-
 
 ## Important limitation
 
-The 24 query/document judgments were constructed from topic groupings when the synthetic fixture was written. They are provisional labels, not independent human relevance judgments; both models are evaluated on the same data, but the numbers are exploratory and may overestimate real-world relevance. Before selecting a production model, a Chinese-speaking reviewer should independently judge query/story pairs, including cross-topic matches and nuanced or potentially harmful recommendations, on a separate rights-approved collection. Do not publish these fictional stories as real testimonies.
+The aggregate 24-query metrics use provisional topic-based labels, not independent human judgments; both models are evaluated on the same data, but the numbers are exploratory and may overestimate real-world relevance. A separate partial human review and the MVP model decision are summarized in [the evaluation notes](../../docs/embedding-evaluation.md). Before the pilot, assess representative, rights-approved content for relevance and safety, including cross-topic matches and nuanced or potentially harmful recommendations. Do not publish these fictional stories as real testimonies.
 
 ## Setup
 
