@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Eyebrow, SectionTitle } from "@/components/ui/typography";
 import { PreviewExperience } from "@/components/preview-experience";
@@ -7,10 +8,10 @@ export default function Home() {
   return (
     <main className="page-frame">
       <header className="site-header">
-        <a className="site-wordmark" href="/" aria-label="見證故事，回到首頁">
+        <Link className="site-wordmark" href="/" aria-label="見證故事，回到首頁">
           <span className="wordmark-line" aria-hidden="true" />
           見證故事
-        </a>
+        </Link>
         <span className="site-header-note">介面展示版本</span>
       </header>
 
