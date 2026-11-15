@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Story } from "@/lib/contracts";
 
@@ -7,42 +8,28 @@ type TestimonyCardProps = {
   actions?: ReactNode;
 };
 
-export function TestimonyCard({ story, number, actions }: TestimonyCardProps) {
+export function TestimonyCard({ story, number = 1, actions }: TestimonyCardProps) {
+  const scene = (number - 1) % 4;
   return (
-    <article className="story-card" data-testid="testimony-card">
-      <div className="story-card-meta">
-        {number !== undefined && (
-          <span className="story-number">
-            {String(number).padStart(2, "0")}
-          </span>
-        )}
-        <span>{story.sourceName}</span>
-        <span aria-hidden="true">·</span>
-        <span>見證故事</span>
-      </div>
-      <div>
-        <h3 className="story-title">{story.title}</h3>
-        <p className="story-summary">{story.summary}</p>
-      </div>
-      {actions}
-      <div className="story-card-footer">
-        <span className="mock-label">
-          {story.isMock ? "此內容為虛構示例" : "原始來源"}
+    <article className="story-card story-card--image" data-testid="testimony-card">
+      <Link
+        href={`/stories/${story.id}`}
+        className={`story-cover story-cover--${scene}`}
+        aria-label={`閱讀故事：${story.title}`}
+        data-testid="story-open"
+      >
+        <span className="story-cover-top">
+          <span className="story-cover-chapter">{String(number).padStart(2, "0")} / 故事</span>
+          <span className="story-cover-demo">示意影像</span>
         </span>
-        {story.sourceUrl ? (
-          <a
-            className="source-link"
-            href={story.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`前往原始故事：${story.title}`}
-          >
-            閱讀原文
-          </a>
-        ) : (
-          <span className="mock-label">尚無原文連結</span>
-        )}
-      </div>
+        <span className="story-cover-copy">
+          <span className="story-cover-source">{story.sourceName}</span>
+          <span className="story-cover-title">{story.title}</span>
+          <span className="story-cover-description">{story.summary}</span>
+          <span className="story-cover-read">閱讀這段故事 <span aria-hidden="true">↗</span></span>
+        </span>
+      </Link>
+      {actions ? <div className="story-feedback">{actions}</div> : null}
     </article>
   );
 }
