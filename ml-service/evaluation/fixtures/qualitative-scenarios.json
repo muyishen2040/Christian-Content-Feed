@@ -1,0 +1,14 @@
+{
+  "name": "qualitative-scenarios-v1",
+  "provenance": "Fictional composite scenarios for local exploration; not actual user descriptions.",
+  "scenarios": [
+    {"id": "moving", "label": "Moving and loneliness", "text": "半年前搬到一個不熟悉的城市工作。雖然同事都很友善，下班回到租屋處卻沒有人可以說話。我去了兩次教會，還是不知道怎麼跟人建立關係。"},
+    {"id": "caregiving", "label": "Caregiving and exhaustion", "text": "媽媽生病後，我每天接送她看診，還要兼顧工作。兄弟姊妹住得遠，我其實很疲憊，但一想到休息就覺得自己不孝順。"},
+    {"id": "hurt_by_friend", "label": "A friend broke my trust", "text": "我把一件很私人的事告訴朋友，他卻轉告給其他人。我現在又生氣又難過，不知道怎麼面對這段友情，也不想有人急著叫我原諒。"},
+    {"id": "hurt_a_friend", "label": "I hurt a friend", "text": "我把朋友交代保密的事情說了出去，讓她受到傷害。現在我很後悔，想真誠道歉，但也知道對方可能需要空間。"},
+    {"id": "money", "label": "Bills and money pressure", "text": "家裡收入最近變少，房租和每月帳單快要付不出來。我不想讓孩子擔心，也不好意思向朋友提起自己正在經歷的壓力。"},
+    {"id": "faith", "label": "Questions about faith", "text": "我从小去教会，最近祷告时却觉得上帝很遥远。有些问题一直没有答案，我不确定能不能诚实地说出自己的怀疑。"},
+    {"id": "grief", "label": "Grieving a parent", "text": "爸爸過世幾個月了。白天忙起來還好，但每次回家看到他的椅子，就會很想念他。我知道家人也難過，卻不知道怎麼和他們談。"},
+    {"id": "no_direct_match", "label": "A gap in the catalog", "text": "地震以後，我住的房子需要重建。家人都平安，但我不知道怎麼面對突然失去家園和接下來的重建工作。"}
+  ]
+}
