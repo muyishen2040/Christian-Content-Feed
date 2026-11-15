@@ -1,4 +1,7 @@
 // Manual deployment smoke test. No credentials or personal content are printed.
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+
 export async function verifyPreview({ url, bypassToken = "", allowedHost = "", fetcher = fetch }) {
   if (!url) throw new Error("PREVIEW_URL must be set");
   const base = new URL(url);
@@ -30,7 +33,7 @@ export async function verifyPreview({ url, bypassToken = "", allowedHost = "", f
   return true;
 }
 
-if (process.argv[1]?.endsWith("/verify-preview.mjs")) {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   verifyPreview({
     url: process.env.PREVIEW_URL,
     bypassToken: process.env.VERCEL_AUTOMATION_BYPASS_SECRET,

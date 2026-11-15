@@ -6,9 +6,9 @@ This repository is a monorepo. **Vercel project Root Directory must be `web`**, 
 
 1. In Vercel, import `muyishen2040/Christian-Content-Feed` from GitHub, selecting the intended team/personal account. Under Project Settings > Build and Deployment set Root Directory `web` (not the repo root), Next.js framework and npm. Confirm `main` as Production Branch.
 2. Under Environment Variables configure **Preview** and **Production** scopes separately. For Preview use only a *disposable staging Supabase* `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. `SUPABASE_SERVICE_ROLE_KEY`, if needed in future, must remain a server-only secret and must not have a `NEXT_PUBLIC_` prefix. Production points only to a separate pilot project, with no real users until launch. A preview must never have credentials that can access the production/pilot database.
-3. Configure GitHub PR previews and verify that a commit on a branch yields a unique HTTPS preview, while merge to `main` updates the production deployment. Keep public production access restricted until the pilot is approved.
-4. In Settings > Deployment Protection, protect previews with the method supported by your Vercel plan. **On Vercel Hobby, Preview protection does not protect the production domain.** Do not place personal descriptions or unapproved testimony behind a publicly accessible production URL. If the plan cannot protect production, keep testing limited to protected previews and delay the pilot production launch (or add properly tested application-level authorization / upgrade the plan). Prefer Vercel Authentication or restricted shareable links for collaborator phone tests.
-5. Invite Mu An to the Vercel project or use a controlled Shareable Link. From two physical phones, open the preview and confirm narrow-screen wrapping, mock content notice, and safe login/protection. Do not share screenshots containing personal descriptions.
+3. Verify that a commit on a branch yields a unique HTTPS preview, while a merge to `main` updates the production deployment.
+4. The current project is intentionally public: Vercel Authentication is disabled for production and preview deployments. Anyone with a deployment URL can open it. The current app uses fictional mock content. Before connecting real data, decide which data and environments may be public and configure appropriate access controls. Vercel Authentication can protect all deployments, including production, on the Hobby plan; enabling it requires authorized visitors to sign in. See [Vercel's announcement](https://vercel.com/changelog/protect-production-deployments-for-free-on-every-plan).
+5. From two physical phones, open the preview and confirm narrow-screen wrapping and the mock-content notice. If deployment protection is enabled in future, verify collaborator access as well.
 
 ## CI and on-phone smoke verification
 
@@ -24,7 +24,7 @@ After creating a real Vercel Preview deployment:
 
 - If a preview fails, fix the branch and push a new commit; use the preview URL on the PR to retest.
 - If a merge to `main` breaks production, revert the offending PR on GitHub and let the Git integration redeploy. Alternatively redeploy the last known-good Vercel deployment while the revert is reviewed.
-- After rollback, confirm the protected page on both a phone and in the deployment logs. Never temporarily point a preview to production data to debug.
+- After rollback, confirm the page on a phone and check the deployment logs. Never temporarily point a preview to production data to debug.
 
 ## Release gate
 

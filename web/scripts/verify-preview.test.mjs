@@ -1,8 +1,20 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { verifyPreview } from "./verify-preview.mjs";
 
 const html = "<html><body>開發預覽 · 故事，陪你走一段路</body></html>";
+
+test("running the script without a URL fails rather than silently succeeding", () => {
+  const script = fileURLToPath(new URL("./verify-preview.mjs", import.meta.url));
+  const result = spawnSync(process.execPath, [script], {
+    encoding: "utf8",
+    env: { ...process.env, PREVIEW_URL: "" },
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /PREVIEW_URL must be set/);
+});
 
 test("valid preview checks HTTPS landing page without secrets", async () => {
   let received;
