@@ -11,10 +11,10 @@ type LocalState = { reaction: Reaction; saved: boolean };
 export function PreviewExperience({ stories }: { stories: Story[] }) {
   const [feedback, setFeedback] = useState<Record<string, LocalState>>({});
   const update = (id: string, change: Partial<LocalState>) => {
-    setFeedback((current) => ({
-      ...current,
-      [id]: { reaction: null, saved: false, ...current[id], ...change },
-    }));
+    setFeedback((current) => {
+      const previous = current[id] ?? { reaction: null, saved: false };
+      return { ...current, [id]: { ...previous, ...change } };
+    });
   };
 
   return (
