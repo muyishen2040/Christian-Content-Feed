@@ -29,10 +29,9 @@ try {
         .filter((el) => el.getBoundingClientRect().right > viewport + 2)
         .slice(0, 8)
         .map((el) => ({ name: el.tagName.toLowerCase(), right: Math.round(el.getBoundingClientRect().right) }));
-      const hasBackground = [...document.querySelectorAll(".story-cover")].every((el) =>
-        getComputedStyle(el).backgroundImage.includes("pexels-photo"),
-      );
-      return { viewport, scrollWidth: document.documentElement.scrollWidth, overflowing, hasBackground };
+      const backgrounds = [...document.querySelectorAll(".story-cover")].map((el) => getComputedStyle(el).backgroundImage);
+      const hasBackground = backgrounds.length === 4 && backgrounds.every((value) => value !== "none") && new Set(backgrounds).size === 4;
+      return { viewport, scrollWidth: document.documentElement.scrollWidth, overflowing, hasBackground, backgrounds };
     });
     assert.ok(layout.scrollWidth <= width + 1 && layout.overflowing.length === 0,
       `Horizontal overflow at ${width}px: ${JSON.stringify(layout)}`);
