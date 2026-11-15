@@ -8,7 +8,11 @@ export default function Home() {
   return (
     <main className="page-frame">
       <header className="site-header">
-        <Link className="site-wordmark" href="/" aria-label="見證故事，回到首頁">
+        <Link
+          className="site-wordmark"
+          href="/"
+          aria-label="見證故事，回到首頁"
+        >
           <span className="wordmark-line" aria-hidden="true" />
           見證故事
         </Link>
