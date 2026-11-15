@@ -9,3 +9,5 @@ node_modules/
 .next/
 coverage/
 *.tsbuildinfo
+ml-service/evaluation/review/unreviewed-pairs.csv
+ml-service/evaluation/results/qualitative.json

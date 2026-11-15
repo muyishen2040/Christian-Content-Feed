@@ -48,26 +48,5 @@ class EvaluationTests(unittest.TestCase):
         self.assertTrue(all(r["relevant_0_or_1"] == "" for r in rows))
         self.assertEqual(rows, make_rows(docs, queries, results))
 
-    def test_qualitative_results_match_fictional_fixtures(self):
-        root = FIXTURE.parent.parent
-        fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
-        scenarios = json.loads((root / "fixtures" / "qualitative-scenarios.json").read_text(encoding="utf-8"))
-        results = json.loads((root / "results" / "qualitative.json").read_text(encoding="utf-8"))
-        docs, _ = flatten_fixture(fixture)
-        by_id = {doc["id"]: doc["text"] for doc in docs}
-        self.assertEqual(results["story_fixture_sha256"], fixture_digest(fixture))
-        self.assertEqual(results["scenarios_sha256"], fixture_digest(scenarios))
-        scenario_ids = {case["id"] for case in scenarios["scenarios"]}
-        self.assertGreaterEqual(len(scenario_ids), 8)
-        for model in ("bge", "e5"):
-            rankings = results["results"][model]["rankings"]
-            self.assertEqual(set(rankings), scenario_ids)
-            for rows in rankings.values():
-                self.assertEqual(len(rows), 3)
-                self.assertEqual(len({row["story_id"] for row in rows}), 3)
-                for row in rows:
-                    self.assertEqual(row["text"], by_id[row["story_id"]])
-
-
 if __name__ == "__main__":
     unittest.main()
