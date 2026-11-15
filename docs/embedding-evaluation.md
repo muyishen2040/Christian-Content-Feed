@@ -21,7 +21,7 @@ The provisional labels come from the fixture's topic groupings, except for two p
 | Imports through first query | 8.015 s | 9.227 s |
 | Sampled peak process RSS | 359.8 MiB | 624.9 MiB |
 
-There are only 12 queries in each script group. The timings are one local run, not cloud capacity, a production benchmark, a fairness conclusion or an SLA. Cached load excludes downloading weights; startup begins inside the script before importing the ML libraries. Peak RSS includes batch encoding all stories and is not steady-state service memory. See [the evaluation guide](../ml-service/evaluation/README.md), the [BGE results](../ml-service/evaluation/results/bge.json), and the [E5 results](../ml-service/evaluation/results/e5.json) for settings, model revisions, per-query rankings and limitations.
+There are only 12 queries in each script group. The timings are one local run, not cloud capacity, a production benchmark, a fairness conclusion or an SLA. Cached load excludes downloading weights; startup begins inside the script before importing the ML libraries. Peak RSS includes batch encoding all stories and is not steady-state service memory. See [the evaluation guide](../ml-service/evaluation/README.md) for settings, pinned model revisions and how to generate per-query rankings. The original detailed result files are not tracked in the repository; a new run may produce different timings or rankings.
 
 ## Examples to review
 

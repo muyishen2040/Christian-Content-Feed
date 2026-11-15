@@ -11,3 +11,5 @@ coverage/
 *.tsbuildinfo
 ml-service/evaluation/review/unreviewed-pairs.csv
 ml-service/evaluation/results/qualitative.json
+ml-service/evaluation/results/bge.json
+ml-service/evaluation/results/e5.json

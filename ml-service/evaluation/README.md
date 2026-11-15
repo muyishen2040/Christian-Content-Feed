@@ -25,7 +25,7 @@ python ml-service/evaluation/evaluate.py --model bge --threads 2 --repetitions 3
 python ml-service/evaluation/evaluate.py --model e5 --threads 2 --repetitions 3 --output ml-service/evaluation/results/e5.json
 ```
 
-For comparable cached-load measurements, run each command once to download/cache the weights, then repeat with `--offline`, writing to the same result path. Run each model in a separate process with the same settings and an otherwise idle machine. The JSON includes per-query top-five IDs so reviewers can inspect failures without storing the full text twice.
+For comparable cached-load measurements, run each command once to download/cache the weights, then repeat with `--offline`, writing to the same result path. Preserve any earlier results you want to keep before rerunning: these commands overwrite their output paths. Run each model in a separate process with the same settings and an otherwise idle machine. The generated result files are ignored by Git and include per-query top-five IDs. A new run can produce different timings or rankings from the original run.
 
 ## Measurement and interpretation
 
@@ -50,7 +50,7 @@ The JSON includes cosine similarities for reproducibility. They are model-specif
 
 ## Independent review
 
-Generate a model-blind worksheet of 167 fictional query/story pairs from the saved model results:
+First run both models as described above. Then generate a model-blind worksheet from those local result files:
 
 ```sh
 python ml-service/evaluation/review.py prepare --results ml-service/evaluation/results/bge.json ml-service/evaluation/results/e5.json --review ml-service/evaluation/review/unreviewed-pairs.csv
@@ -64,4 +64,4 @@ After every row is labeled, compare the same saved rankings using the reviewed l
 python ml-service/evaluation/review.py score --results ml-service/evaluation/results/bge.json ml-service/evaluation/results/e5.json --review path/to/completed-review.csv
 ```
 
-This scores the union of each model's top five and the initial provisional positives, not all possible pairs. The script rejects missing or duplicate rows and changed example text. Queries with no relevant story in the pool are listed and excluded from the aggregate metrics rather than assigned an invented score. No outside-the-pool match can be detected, so this remains a small, incomplete judgment set. For a new run with unchanged fixture, use `review.py prepare` with the same `--results` arguments and a **new** `--review` path; it refuses to overwrite an existing file.
+This scores the union of each model's top five and the initial provisional positives, not all possible pairs. The script rejects missing or duplicate rows and changed example text. Queries with no relevant story in the pool are listed and excluded from the aggregate metrics rather than assigned an invented score. No outside-the-pool match can be detected, so this remains a small, incomplete judgment set. Preserve the exact result files used to prepare a worksheet: if new rankings differ, the existing worksheet may not match the new pool. For a new run, use `review.py prepare` with the new `--results` arguments and a **new** `--review` path; it refuses to overwrite an existing file.
