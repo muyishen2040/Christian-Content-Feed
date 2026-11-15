@@ -32,6 +32,10 @@ There are only 12 queries in each script group. The timings are one local run, n
 
 The [blind review sheet](../ml-service/evaluation/review/unreviewed-pairs.csv) contains 167 model-blind pooled query/story pairs with **empty** relevance labels. A Chinese-speaking human reviewer should complete the sheet before the results are represented as human-judged. The guide explains how to score the reviewed pool and its limitations. Use a separate, permission-reviewed set of real catalog descriptions and a broader set of life situations for a later pilot evaluation.
 
+## Longer example situations
+
+We also ran eight more detailed fictional situations through both actual models against the same fictional story catalog. Their full inputs and top-three outputs are recorded in [qualitative.json](../ml-service/evaluation/results/qualitative.json); they do not change the metrics above. For example, both models ranked a caregiving story first for someone exhausted while caring for her mother. For someone whose friend shared a secret, however, both ranked a story told by the person who hurt a friend first; the story told from the hurt person's perspective ranked second with BGE and third with E5. For the earthquake-and-housing-loss example, neither model had an earthquake story available and both returned unrelated or only loosely related stories. These examples show why ordering alone cannot prove a recommendation is appropriate and why an editor-selected fallback is needed when the catalog lacks a close match. The examples are exploratory, not reviewed relevance judgments; model-specific cosine scores are not probabilities and should not be compared across models.
+
 ## Implementation decision for the prototype
 
 - Use BGE as the **provisional** candidate with 512-dimensional, normalized vectors, the Chinese retrieval instruction on queries, CLS pooling and the pinned model revision from the evaluation guide. Store model/version metadata with each embedding. Documents and queries must use the same model and compatible version.

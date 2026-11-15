@@ -38,6 +38,16 @@ For comparable cached-load measurements, run each command once to download/cache
 
 Model cards: [BGE](https://huggingface.co/BAAI/bge-small-zh-v1.5), [multilingual E5](https://huggingface.co/intfloat/multilingual-e5-small).
 
+## Explore realistic situations
+
+Eight longer, fictional composite situations and their actual top-three local rankings are saved in `results/qualitative.json`. They reuse the fictional 24-story catalog, so they illustrate how each model orders examples and where the catalog has gaps; they are not independent human relevance judgments or a test on real testimonies. To regenerate them with the cached model revisions:
+
+```sh
+python ml-service/evaluation/qualitative.py --output ml-service/evaluation/results/qualitative.json
+```
+
+The JSON includes cosine similarities for reproducibility. They are model-specific similarity scores, not probabilities; do not compare their absolute values across models or use them as relevance thresholds without calibration.
+
 ## Independent review
 
 The checked-in `review/unreviewed-pairs.csv` is a model-blind worksheet of 167 fictional query/story pairs. For each row, a Chinese-speaking reviewer should set `relevant_0_or_1` to `1` if the story is useful for the described situation or `0` if it is not; add context in `notes`. Do not infer relevance from topic alone. A reviewer can use a different copy for their responses and should not inspect the model rankings first. Record reviewer identity, date, and review process separately; the blank file is not evidence of review.
