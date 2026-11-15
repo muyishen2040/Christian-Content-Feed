@@ -12,21 +12,41 @@ type FeedbackActionsProps = {
 };
 
 export function FeedbackActions({
-  reaction, saved, onInterested, onNotForMe, onSave, busy = false,
+  reaction,
+  saved,
+  onInterested,
+  onNotForMe,
+  onSave,
+  busy = false,
   label = "故事回饋",
 }: FeedbackActionsProps) {
   return (
     <div role="group" aria-label={label} className="feedback-group">
-      <button type="button" className="feedback-action" aria-pressed={reaction === "interested"}
-        disabled={busy} onClick={onInterested}>
+      <button
+        type="button"
+        className="feedback-action"
+        aria-pressed={reaction === "interested"}
+        disabled={busy}
+        onClick={onInterested}
+      >
         感興趣
       </button>
-      <button type="button" className="feedback-action" aria-pressed={reaction === "not_for_me"}
-        disabled={busy} onClick={onNotForMe}>
+      <button
+        type="button"
+        className="feedback-action"
+        aria-pressed={reaction === "not_for_me"}
+        disabled={busy}
+        onClick={onNotForMe}
+      >
         不適合我
       </button>
-      <button type="button" className="feedback-action" aria-pressed={saved}
-        disabled={busy} onClick={onSave}>
+      <button
+        type="button"
+        className="feedback-action"
+        aria-pressed={saved}
+        disabled={busy}
+        onClick={onSave}
+      >
         {saved ? "已收藏" : "收藏"}
       </button>
     </div>

@@ -22,16 +22,31 @@ export function PreviewExperience({ stories }: { stories: Story[] }) {
       {stories.map((story, index) => {
         const selected = feedback[story.id] ?? { reaction: null, saved: false };
         return (
-          <TestimonyCard key={story.id} story={story} number={index + 1} actions={
-            <FeedbackActions
-              label={`${story.title}的回饋`}
-              reaction={selected.reaction}
-              saved={selected.saved}
-              onInterested={() => update(story.id, { reaction: selected.reaction === "interested" ? null : "interested" })}
-              onNotForMe={() => update(story.id, { reaction: selected.reaction === "not_for_me" ? null : "not_for_me" })}
-              onSave={() => update(story.id, { saved: !selected.saved })}
-            />
-          } />
+          <TestimonyCard
+            key={story.id}
+            story={story}
+            number={index + 1}
+            actions={
+              <FeedbackActions
+                label={`${story.title}的回饋`}
+                reaction={selected.reaction}
+                saved={selected.saved}
+                onInterested={() =>
+                  update(story.id, {
+                    reaction:
+                      selected.reaction === "interested" ? null : "interested",
+                  })
+                }
+                onNotForMe={() =>
+                  update(story.id, {
+                    reaction:
+                      selected.reaction === "not_for_me" ? null : "not_for_me",
+                  })
+                }
+                onSave={() => update(story.id, { saved: !selected.saved })}
+              />
+            }
+          />
         );
       })}
     </div>

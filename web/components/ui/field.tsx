@@ -23,11 +23,15 @@ export function TextField({
     hint ? `${inputId}-hint` : null,
     error ? `${inputId}-error` : null,
     describedBy,
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="ui-field">
-      <label className="ui-field-label" htmlFor={inputId}>{label}</label>
+      <label className="ui-field-label" htmlFor={inputId}>
+        {label}
+      </label>
       <input
         {...props}
         id={inputId}
@@ -35,8 +39,16 @@ export function TextField({
         aria-describedby={descriptionIds || undefined}
         className={["ui-input", className].filter(Boolean).join(" ")}
       />
-      {hint ? <p className="ui-field-hint" id={`${inputId}-hint`}>{hint}</p> : null}
-      {error ? <p className="ui-field-error" id={`${inputId}-error`} role="alert">{error}</p> : null}
+      {hint ? (
+        <p className="ui-field-hint" id={`${inputId}-hint`}>
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="ui-field-error" id={`${inputId}-error`} role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
