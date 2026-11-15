@@ -1,12 +1,22 @@
 import {
-  type ApiClient, type FeedQuery, type FeedbackRequest, type ProfileInput,
-  feedResponseSchema, feedbackResponseSchema, mutationResponseSchema,
-  profileResponseSchema, savedResponseSchema, safetyResponseSchema,
-} from "./contracts";
-import { MockApiClient } from "./mock-api";
+  type ApiClient,
+  type FeedEventRequest,
+  type FeedQuery,
+  type FeedbackRequest,
+  type ProfileInput,
+  feedEventResponseSchema,
+  feedResponseSchema,
+  feedbackResponseSchema,
+  mutationResponseSchema,
+  profileResponseSchema,
+  savedResponseSchema,
+  safetyResponseSchema,
+} from "./contracts.ts";
+import { ApiError } from "./api-error.ts";
+import { MockApiClient } from "./mock-api.ts";
 
-// The real adapter deliberately does not implement authentication here.
-// Subsequent backend tickets must supply anonymous Supabase auth/session handling.
+// Real authentication and same-origin mutation protection are MUY-26's responsibility.
+// Never pass a service-role key to this client.
 export function createHttpApiClient(fetcher: typeof fetch = fetch): ApiClient {
   async function request(path: string, init?: RequestInit): Promise<unknown> {
     const response = await fetcher(path, {
@@ -15,37 +25,52 @@ export function createHttpApiClient(fetcher: typeof fetch = fetch): ApiClient {
       headers: { "Content-Type": "application/json" },
       ...init,
     });
-    if (!response.ok) throw new Error(`Request failed (${response.status})`);
+    if (!response.ok) {
+      // Do not reflect raw text, server traces or arbitrary error bodies into the UI.
+      throw new ApiError(response.status, "HTTP_ERROR", `Request failed (${response.status})`);
+    }
     return response.json();
   }
-  function qs(query: FeedQuery = {}) {
+  function queryString(query: FeedQuery = {}) {
     const params = new URLSearchParams();
     if (query.cursor) params.set("cursor", query.cursor);
     if (query.limit !== undefined) params.set("limit", String(query.limit));
-    return params.toString() ? `?${params}` : "";
+    return params.size ? `?${params}` : "";
   }
   return {
+    async getProfile() {
+      return profileResponseSchema.parse(await request("/api/profile"));
+    },
     async saveProfile(input: ProfileInput) {
-      return profileResponseSchema.parse(await request("/api/profile", {
-        method: "PUT", body: JSON.stringify(input),
-      }));
+      return profileResponseSchema.parse(
+        await request("/api/profile", { method: "PUT", body: JSON.stringify(input) }),
+      );
     },
     async getFeed(query: FeedQuery = {}) {
-      return feedResponseSchema.parse(await request(`/api/feed${qs(query)}`));
+      return feedResponseSchema.parse(await request(`/api/feed${queryString(query)}`));
+    },
+    async recordFeedEvent(input: FeedEventRequest) {
+      return feedEventResponseSchema.parse(
+        await request("/api/feed/events", { method: "POST", body: JSON.stringify(input) }),
+      );
     },
     async sendFeedback(input: FeedbackRequest) {
-      return feedbackResponseSchema.parse(await request("/api/feedback", {
-        method: "POST", body: JSON.stringify(input),
-      }));
+      return feedbackResponseSchema.parse(
+        await request("/api/feedback", { method: "POST", body: JSON.stringify(input) }),
+      );
     },
     async getSaved(query: FeedQuery = {}) {
-      return savedResponseSchema.parse(await request(`/api/saved${qs(query)}`));
+      return savedResponseSchema.parse(await request(`/api/saved${queryString(query)}`));
     },
     async reset() {
-      return mutationResponseSchema.parse(await request("/api/profile/reset", { method: "POST" }));
+      return mutationResponseSchema.parse(
+        await request("/api/profile/reset", { method: "POST" }),
+      );
     },
     async deleteProfile() {
-      return mutationResponseSchema.parse(await request("/api/profile", { method: "DELETE" }));
+      return mutationResponseSchema.parse(
+        await request("/api/profile", { method: "DELETE" }),
+      );
     },
     async getSafety() {
       return safetyResponseSchema.parse(await request("/api/safety"));
