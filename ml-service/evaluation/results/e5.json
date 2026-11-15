@@ -1,0 +1,526 @@
+{
+  "model": "intfloat/multilingual-e5-small",
+  "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "fixture": "synthetic-zh-testimonies-v1",
+  "fixture_sha256": "ef29b23e08a50867a38053c663d30b9140c82a73c193cf10243395de284cc85d",
+  "judgment_status": "provisional_topic_labels_not_human_reviewed",
+  "dimension": 384,
+  "pooling": "mean",
+  "documents": 24,
+  "queries": 24,
+  "threads": 2,
+  "repetitions": 3,
+  "offline_model_load": true,
+  "model_load_seconds": 1.836,
+  "startup_through_first_query_seconds": 9.227,
+  "first_query_ms": 58.69,
+  "query_latency_ms": {
+    "p50": 32.28,
+    "p95": 43.78
+  },
+  "peak_process_rss_mib": 624.9,
+  "metrics_at_5": {
+    "recall": 0.8333,
+    "mrr": 0.8417,
+    "ndcg": 0.7667
+  },
+  "metrics_by_script_at_5": {
+    "traditional": {
+      "recall": 0.75,
+      "mrr": 0.7667,
+      "ndcg": 0.6585
+    },
+    "simplified": {
+      "recall": 0.9167,
+      "mrr": 0.9167,
+      "ndcg": 0.8748
+    }
+  },
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "python": "3.12.10",
+    "torch": "2.5.1+cpu",
+    "transformers": "4.48.3"
+  },
+  "rankings": [
+    {
+      "query_id": "relocation-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "relocation-d1",
+        "relocation-d2"
+      ],
+      "top_5": [
+        "illness-d1",
+        "marriage-d1",
+        "illness-d2",
+        "forgiveness-d1",
+        "relocation-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 0.5,
+        "mrr": 0.2,
+        "ndcg": 0.23719771276929622
+      }
+    },
+    {
+      "query_id": "relocation-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "relocation-d1",
+        "relocation-d2"
+      ],
+      "top_5": [
+        "illness-d1",
+        "family_conflict-d2",
+        "family_conflict-d1",
+        "job_transition-d1",
+        "marriage-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 0.0,
+        "mrr": 0.0,
+        "ndcg": 0.0
+      }
+    },
+    {
+      "query_id": "job_transition-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "job_transition-d1",
+        "job_transition-d2"
+      ],
+      "top_5": [
+        "job_transition-d1",
+        "study_pressure-d1",
+        "study_pressure-d2",
+        "financial-d2",
+        "job_transition-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 0.8503449055347546
+      }
+    },
+    {
+      "query_id": "job_transition-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "job_transition-d1",
+        "job_transition-d2"
+      ],
+      "top_5": [
+        "job_transition-d1",
+        "job_transition-d2",
+        "study_pressure-d2",
+        "study_pressure-d1",
+        "family_conflict-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "illness-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "illness-d1",
+        "illness-d2"
+      ],
+      "top_5": [
+        "study_pressure-d2",
+        "illness-d1",
+        "family_conflict-d1",
+        "job_transition-d1",
+        "forgiveness-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 0.5,
+        "mrr": 0.5,
+        "ndcg": 0.38685280723454163
+      }
+    },
+    {
+      "query_id": "illness-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "illness-d1",
+        "illness-d2"
+      ],
+      "top_5": [
+        "illness-d1",
+        "illness-d2",
+        "job_transition-d1",
+        "study_pressure-d2",
+        "family_conflict-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "bereavement-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "bereavement-d1",
+        "bereavement-d2"
+      ],
+      "top_5": [
+        "bereavement-d1",
+        "forgiveness-d1",
+        "relocation-d2",
+        "marriage-d1",
+        "marriage-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 0.5,
+        "mrr": 1.0,
+        "ndcg": 0.6131471927654584
+      }
+    },
+    {
+      "query_id": "bereavement-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "bereavement-d1",
+        "bereavement-d2"
+      ],
+      "top_5": [
+        "bereavement-d1",
+        "family_conflict-d1",
+        "forgiveness-d1",
+        "marriage-d1",
+        "bereavement-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 0.8503449055347546
+      }
+    },
+    {
+      "query_id": "marriage-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "marriage-d1",
+        "marriage-d2"
+      ],
+      "top_5": [
+        "family_conflict-d1",
+        "marriage-d2",
+        "marriage-d1",
+        "bereavement-d1",
+        "bereavement-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 0.5,
+        "ndcg": 0.6934264036172708
+      }
+    },
+    {
+      "query_id": "marriage-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "marriage-d1",
+        "marriage-d2"
+      ],
+      "top_5": [
+        "marriage-d1",
+        "family_conflict-d1",
+        "marriage-d2",
+        "job_transition-d1",
+        "family_conflict-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 0.9197207891481876
+      }
+    },
+    {
+      "query_id": "family_conflict-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "family_conflict-d1",
+        "family_conflict-d2"
+      ],
+      "top_5": [
+        "family_conflict-d1",
+        "marriage-d1",
+        "marriage-d2",
+        "family_conflict-d2",
+        "bereavement-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 0.8772153153380493
+      }
+    },
+    {
+      "query_id": "family_conflict-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "family_conflict-d1",
+        "family_conflict-d2"
+      ],
+      "top_5": [
+        "family_conflict-d1",
+        "marriage-d1",
+        "marriage-d2",
+        "study_pressure-d2",
+        "family_conflict-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 0.8503449055347546
+      }
+    },
+    {
+      "query_id": "financial-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "financial-d1",
+        "financial-d2"
+      ],
+      "top_5": [
+        "financial-d1",
+        "marriage-d1",
+        "caregiving-d1",
+        "caregiving-d2",
+        "bereavement-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 0.5,
+        "mrr": 1.0,
+        "ndcg": 0.6131471927654584
+      }
+    },
+    {
+      "query_id": "financial-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "financial-d1",
+        "financial-d2"
+      ],
+      "top_5": [
+        "financial-d1",
+        "job_transition-d1",
+        "study_pressure-d2",
+        "financial-d2",
+        "marriage-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 0.8772153153380493
+      }
+    },
+    {
+      "query_id": "faith_doubt-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "faith_doubt-d1",
+        "faith_doubt-d2"
+      ],
+      "top_5": [
+        "faith_doubt-d2",
+        "faith_doubt-d1",
+        "illness-d1",
+        "addiction-d1",
+        "marriage-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "faith_doubt-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "faith_doubt-d1",
+        "faith_doubt-d2"
+      ],
+      "top_5": [
+        "faith_doubt-d1",
+        "faith_doubt-d2",
+        "job_transition-d1",
+        "relocation-d1",
+        "illness-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "addiction-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "addiction-d1",
+        "addiction-d2"
+      ],
+      "top_5": [
+        "addiction-d1",
+        "marriage-d1",
+        "family_conflict-d1",
+        "marriage-d2",
+        "job_transition-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 0.5,
+        "mrr": 1.0,
+        "ndcg": 0.6131471927654584
+      }
+    },
+    {
+      "query_id": "addiction-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "addiction-d1",
+        "addiction-d2"
+      ],
+      "top_5": [
+        "addiction-d1",
+        "addiction-d2",
+        "job_transition-d1",
+        "financial-d1",
+        "study_pressure-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "caregiving-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "caregiving-d1",
+        "caregiving-d2"
+      ],
+      "top_5": [
+        "illness-d2",
+        "caregiving-d2",
+        "bereavement-d1",
+        "job_transition-d1",
+        "family_conflict-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 0.5,
+        "mrr": 0.5,
+        "ndcg": 0.38685280723454163
+      }
+    },
+    {
+      "query_id": "caregiving-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "caregiving-d1",
+        "caregiving-d2"
+      ],
+      "top_5": [
+        "caregiving-d2",
+        "caregiving-d1",
+        "family_conflict-d1",
+        "job_transition-d1",
+        "illness-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "study_pressure-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "study_pressure-d1",
+        "study_pressure-d2"
+      ],
+      "top_5": [
+        "study_pressure-d1",
+        "study_pressure-d2",
+        "family_conflict-d1",
+        "job_transition-d1",
+        "financial-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "study_pressure-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "study_pressure-d1",
+        "study_pressure-d2"
+      ],
+      "top_5": [
+        "study_pressure-d1",
+        "study_pressure-d2",
+        "family_conflict-d1",
+        "job_transition-d1",
+        "financial-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    },
+    {
+      "query_id": "forgiveness-q1",
+      "script": "traditional",
+      "relevant_ids": [
+        "forgiveness-d1"
+      ],
+      "top_5": [
+        "bereavement-d2",
+        "forgiveness-d1",
+        "forgiveness-d2",
+        "bereavement-d1",
+        "study_pressure-d2"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 0.5,
+        "ndcg": 0.6309297535714575
+      }
+    },
+    {
+      "query_id": "forgiveness-q2",
+      "script": "simplified",
+      "relevant_ids": [
+        "forgiveness-d2"
+      ],
+      "top_5": [
+        "forgiveness-d2",
+        "bereavement-d2",
+        "forgiveness-d1",
+        "illness-d1",
+        "job_transition-d1"
+      ],
+      "metrics_at_5": {
+        "recall": 1.0,
+        "mrr": 1.0,
+        "ndcg": 1.0
+      }
+    }
+  ]
+}
