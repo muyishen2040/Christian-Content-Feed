@@ -87,17 +87,17 @@
       "flags": ["Source page title includes the author's name; do not store it."]
     },
     {
-      "id": "tektung-grace-in-my-home",
-      "source": "竹塘基督長老教會",
-      "title": "恩典在我家",
-      "url": "https://www.tektung-pct.org/%E9%A6%96%E9%A0%81-home/%E8%A6%8B%E8%AD%89%E5%88%86%E4%BA%AB-witness#h.p_xYmBNdj0Qdq3",
-      "url_level": "item_anchor",
+      "id": "taiwanbible-why-i-believe",
+      "source": "台灣聖經網",
+      "title": "那張沒有被遺忘的傳單",
+      "url": "https://www.taiwanbible.com/web/gospel/viewTestimony.jsp?ID=7127",
+      "url_level": "item",
       "language": "zh-Hant",
-      "preview": "從兒時聽到的福音種子、服役時受洗，到信仰一度流浪，作者回顧上帝在家中的恩典之路。",
-      "tags": ["受洗", "信仰成長", "家庭"],
+      "preview": "小學時因一張夏令營傳單第一次踏進教會的作者，回顧那段與教會相遇的經歷。",
+      "tags": ["童年", "得救", "夏令營"],
       "rights_status": "link_out",
-      "rights_evidence": "Google Sites; robots.txt disallows only /feeds and /*/_/. Footer '版權所有 2019 All Rights Reserved'.",
-      "flags": ["Deep link to this testimony's heading on a page that lists many testimonies (no separate page per testimony).", "The same page contains other testimonies with crisis-adjacent content (a suicide threat described in another item)."]
+      "rights_evidence": "robots.txt: 'Allow: /web/'; its Disallow rules (e.g. /gospel/) apply to root-level paths and do not match /web/gospel/. No reuse terms found on the page.",
+      "flags": ["Rights weaker than church-run sources: the site publishes testimonies submitted by individuals ('刊登其他見證'), so the copyright holder is the author.", "Last modified 2026-06-02.", "The page shows the author's pseudonym; do not store it.", "An earlier candidate from this site (ID 8528) was rejected: the author describes several suicide attempts."]
     },
     {
       "id": "cdts-leave-everything-follow",
