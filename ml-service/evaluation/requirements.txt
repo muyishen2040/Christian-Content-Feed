@@ -1,0 +1,7 @@
+# This isolated evaluation environment is separate from the service runtime.
+torch==2.5.1
+transformers==4.48.3
+huggingface-hub==0.28.1
+safetensors==0.5.2
+numpy==1.26.4
+psutil==7.0.0

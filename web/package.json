@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check app data",
+    "format:check": "prettier --check app data lib tests",
     "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
