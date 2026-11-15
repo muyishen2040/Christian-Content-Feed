@@ -28,8 +28,12 @@ export async function embedEligibleText(
     const isLocal = ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname);
     if (
       (base.protocol !== "https:" && !(base.protocol === "http:" && isLocal)) ||
-      base.username || base.password || base.search || base.hash
-    ) return null;
+      base.username ||
+      base.password ||
+      base.search ||
+      base.hash
+    )
+      return null;
 
     const headers: Record<string, string> = {
       authorization: `Bearer ${token}`,
@@ -40,7 +44,10 @@ export async function embedEligibleText(
       if (!oidcToken) return null;
       headers["x-vercel-trusted-oidc-idp-token"] = oidcToken;
     }
-    const url = new URL(`${base.pathname.replace(/\/$/, "")}/embed`, base.origin);
+    const url = new URL(
+      `${base.pathname.replace(/\/$/, "")}/embed`,
+      base.origin,
+    );
     const response = await fetch(url, {
       method: "POST",
       headers,
@@ -54,12 +61,20 @@ export async function embedEligibleText(
     if (!result || typeof result !== "object") return null;
     const value = result as Partial<Embedding>;
     if (
-      value.model !== EXPECTED_MODEL || value.revision !== EXPECTED_REVISION ||
-      value.export_revision !== EXPECTED_EXPORT || value.dimension !== 512 ||
-      !Array.isArray(value.vector) || value.vector.length !== 512 ||
-      !value.vector.every((item) => typeof item === "number" && Number.isFinite(item))
-    ) return null;
-    const length = Math.sqrt(value.vector.reduce((sum, item) => sum + item * item, 0));
+      value.model !== EXPECTED_MODEL ||
+      value.revision !== EXPECTED_REVISION ||
+      value.export_revision !== EXPECTED_EXPORT ||
+      value.dimension !== 512 ||
+      !Array.isArray(value.vector) ||
+      value.vector.length !== 512 ||
+      !value.vector.every(
+        (item) => typeof item === "number" && Number.isFinite(item),
+      )
+    )
+      return null;
+    const length = Math.sqrt(
+      value.vector.reduce((sum, item) => sum + item * item, 0),
+    );
     if (Math.abs(length - 1) > 0.001) return null;
     return value as Embedding;
   } catch {
