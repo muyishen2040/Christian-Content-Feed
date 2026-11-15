@@ -25,16 +25,19 @@ const profile = (override = {}) => ({
 test("strict profile fields and consent constraints", () => {
   assert.equal(profileInputSchema.safeParse(profile()).success, true);
   assert.equal(
-    profileInputSchema.safeParse(profile({ description: "x".repeat(2001) })).success,
-    false,
-  );
-  assert.equal(
-    profileInputSchema.safeParse(profile({ topics: Array(13).fill("希望") })).success,
-    false,
-  );
-  assert.equal(
-    profileInputSchema.safeParse(profile({ consentKeepText: true, consentStorePreferences: false }))
+    profileInputSchema.safeParse(profile({ description: "x".repeat(2001) }))
       .success,
+    false,
+  );
+  assert.equal(
+    profileInputSchema.safeParse(profile({ topics: Array(13).fill("希望") }))
+      .success,
+    false,
+  );
+  assert.equal(
+    profileInputSchema.safeParse(
+      profile({ consentKeepText: true, consentStorePreferences: false }),
+    ).success,
     false,
   );
   assert.equal(
@@ -42,8 +45,9 @@ test("strict profile fields and consent constraints", () => {
     false,
   );
   assert.equal(
-    profileInputSchema.safeParse(profile({ ageRange: "25-34", gender: "prefer_not_to_say" }))
-      .success,
+    profileInputSchema.safeParse(
+      profile({ ageRange: "25-34", gender: "prefer_not_to_say" }),
+    ).success,
     true,
   );
 });
@@ -55,9 +59,18 @@ test("UUIDs, public attribution and editorial summary are required", () => {
     sourceUrl: "https://publisher.example/story",
   };
   assert.ok(storySchema.safeParse(published).success);
-  assert.equal(storySchema.safeParse({ ...published, sourceUrl: null }).success, false);
-  assert.equal(storySchema.safeParse({ ...published, id: "mock-story" }).success, false);
-  assert.equal(storySchema.safeParse({ ...published, excerpt: "old field" }).success, false);
+  assert.equal(
+    storySchema.safeParse({ ...published, sourceUrl: null }).success,
+    false,
+  );
+  assert.equal(
+    storySchema.safeParse({ ...published, id: "mock-story" }).success,
+    false,
+  );
+  assert.equal(
+    storySchema.safeParse({ ...published, excerpt: "old field" }).success,
+    false,
+  );
 });
 
 test("opaque feed cursor paginates with UUIDs and stable 1-based ranks", async () => {
@@ -80,7 +93,10 @@ test("opaque feed cursor paginates with UUIDs and stable 1-based ranks", async (
 
 test("invalid, mismatched and out-of-range cursors are rejected as 400", async () => {
   const mock = new MockApiClient();
-  for (const cursor of ["bad-cursor", btoa('{"v":1,"offset":999,"scope":"feed","variant":"baseline"}')]) {
+  for (const cursor of [
+    "bad-cursor",
+    btoa('{"v":1,"offset":999,"scope":"feed","variant":"baseline"}'),
+  ]) {
     await assert.rejects(
       () => mock.getFeed({ cursor }),
       (error) => error instanceof ApiError && error.status === 400,
@@ -98,32 +114,42 @@ test("invalid, mismatched and out-of-range cursors are rejected as 400", async (
 
 test("optional description is not retained unless explicitly consented", async () => {
   const mock = new MockApiClient();
-  const response = await mock.saveProfile(profile({
-    description: "這是一段測試文字",
-    ageRange: "25-34",
-    gender: "prefer_not_to_say",
-  }));
+  const response = await mock.saveProfile(
+    profile({
+      description: "這是一段測試文字",
+      ageRange: "25-34",
+      gender: "prefer_not_to_say",
+    }),
+  );
   assert.equal(response.safetyState, "normal");
   assert.equal(response.feedMode, "personalized");
   assert.equal(response.profile.description, null);
   const saved = await mock.getProfile();
   assert.equal(saved.profile.description, null);
   assert.equal(saved.profile.ageRange, undefined);
-  const noConsent = await mock.saveProfile(profile({
-    description: "不要保留",
-    consentStorePreferences: false,
-  }));
+  const noConsent = await mock.saveProfile(
+    profile({
+      description: "不要保留",
+      consentStorePreferences: false,
+    }),
+  );
   assert.equal(noConsent.profile.description, null);
   assert.equal((await mock.getProfile()).profile, null);
 });
 
 test("support flow drops all text and previous personalization", async () => {
-  const mock = new MockApiClient({ detectSupport: (text) => text.includes("fixture-support") });
-  await mock.saveProfile(profile({ description: "safe", consentKeepText: true }));
-  const flagged = await mock.saveProfile(profile({
-    description: "fixture-support",
-    consentKeepText: true,
-  }));
+  const mock = new MockApiClient({
+    detectSupport: (text) => text.includes("fixture-support"),
+  });
+  await mock.saveProfile(
+    profile({ description: "safe", consentKeepText: true }),
+  );
+  const flagged = await mock.saveProfile(
+    profile({
+      description: "fixture-support",
+      consentKeepText: true,
+    }),
+  );
   assert.equal(flagged.safetyState, "support");
   assert.equal(flagged.feedMode, "support");
   assert.equal(flagged.profile, null);
@@ -134,19 +160,27 @@ test("support flow drops all text and previous personalization", async () => {
 test("feedback request validation rejects invalid undo and extra keys", () => {
   assert.equal(
     feedbackRequestSchema.safeParse({
-      testimonyId: storyId, action: "undo", requestId: id(2),
+      testimonyId: storyId,
+      action: "undo",
+      requestId: id(2),
     }).success,
     false,
   );
   assert.equal(
     feedbackRequestSchema.safeParse({
-      testimonyId: storyId, action: "save", requestId: id(3), hidden: true,
+      testimonyId: storyId,
+      action: "save",
+      requestId: id(3),
+      hidden: true,
     }).success,
     false,
   );
   assert.equal(
     feedbackRequestSchema.safeParse({
-      testimonyId: storyId, action: "save", requestId: id(3), undoEventId: id(4),
+      testimonyId: storyId,
+      action: "save",
+      requestId: id(3),
+      undoEventId: id(4),
     }).success,
     false,
   );
@@ -164,7 +198,9 @@ test("feedback is idempotent and conflicting request ID gives HTTP 409", async (
     (error) => error instanceof ApiError && error.status === 409,
   );
   const undo = await mock.sendFeedback({
-    testimonyId: storyId, action: "undo", requestId: id(5),
+    testimonyId: storyId,
+    action: "undo",
+    requestId: id(5),
     undoEventId: first.eventId,
   });
   assert.equal(undo.saved, false);
@@ -174,15 +210,32 @@ test("feedback is idempotent and conflicting request ID gives HTTP 409", async (
 test("unknown testimony produces 404, stale undo produces 409", async () => {
   const mock = new MockApiClient();
   await assert.rejects(
-    () => mock.sendFeedback({ testimonyId: id(999), action: "save", requestId: id(1) }),
+    () =>
+      mock.sendFeedback({
+        testimonyId: id(999),
+        action: "save",
+        requestId: id(1),
+      }),
     (error) => error instanceof ApiError && error.status === 404,
   );
-  const a = await mock.sendFeedback({ testimonyId: storyId, action: "save", requestId: id(2) });
-  await mock.sendFeedback({ testimonyId: storyId, action: "unsave", requestId: id(3) });
+  const a = await mock.sendFeedback({
+    testimonyId: storyId,
+    action: "save",
+    requestId: id(2),
+  });
+  await mock.sendFeedback({
+    testimonyId: storyId,
+    action: "unsave",
+    requestId: id(3),
+  });
   await assert.rejects(
-    () => mock.sendFeedback({
-      testimonyId: storyId, action: "undo", requestId: id(4), undoEventId: a.eventId,
-    }),
+    () =>
+      mock.sendFeedback({
+        testimonyId: storyId,
+        action: "undo",
+        requestId: id(4),
+        undoEventId: a.eventId,
+      }),
     (error) => error instanceof ApiError && error.status === 409,
   );
 });
@@ -214,8 +267,14 @@ test("feed event validates batch, rank, variant and idempotency", async () => {
 
 test("reset and delete clear saved stories and retained profiles", async () => {
   const mock = new MockApiClient();
-  await mock.saveProfile(profile({ description: "opted in", consentKeepText: true }));
-  await mock.sendFeedback({ testimonyId: storyId, action: "save", requestId: id(2) });
+  await mock.saveProfile(
+    profile({ description: "opted in", consentKeepText: true }),
+  );
+  await mock.sendFeedback({
+    testimonyId: storyId,
+    action: "save",
+    requestId: id(2),
+  });
   assert.deepEqual(await mock.reset(), { ok: true });
   assert.equal((await mock.getSaved()).items.length, 0);
   assert.equal((await mock.getProfile()).profile, null);
@@ -232,9 +291,12 @@ test("HTTP adapter uses typed route contracts and reports typed errors", async (
     const path = String(url);
     const query = new URL("https://example.test" + path).searchParams;
     if (path.startsWith("/api/feed?")) {
-      return Response.json(await mock.getFeed({
-        limit: Number(query.get("limit")), cursor: query.get("cursor") ?? undefined,
-      }));
+      return Response.json(
+        await mock.getFeed({
+          limit: Number(query.get("limit")),
+          cursor: query.get("cursor") ?? undefined,
+        }),
+      );
     }
     if (path === "/api/profile" && options.method === "PUT") {
       return Response.json(await mock.saveProfile(JSON.parse(options.body)));
@@ -243,7 +305,9 @@ test("HTTP adapter uses typed route contracts and reports typed errors", async (
       return Response.json(await mock.getProfile());
     }
     if (path === "/api/feed/events" && options.method === "POST") {
-      return Response.json(await mock.recordFeedEvent(JSON.parse(options.body)));
+      return Response.json(
+        await mock.recordFeedEvent(JSON.parse(options.body)),
+      );
     }
     return Response.json({ message: "invalid" }, { status: 404 });
   };
@@ -255,9 +319,13 @@ test("HTTP adapter uses typed route contracts and reports typed errors", async (
   assert.equal(calls.at(-1).url, "/api/feed?limit=2");
   assert.equal(calls.at(-1).options.credentials, "same-origin");
   const event = await api.recordFeedEvent({
-    eventId: id(200), testimonyId: feed.items[0].id, rank: 1,
-    feedVariant: feed.feedVariant, batchId: feed.batchId,
-    pageViewId: id(201), eventName: "impression",
+    eventId: id(200),
+    testimonyId: feed.items[0].id,
+    rank: 1,
+    feedVariant: feed.feedVariant,
+    batchId: feed.batchId,
+    pageViewId: id(201),
+    eventName: "impression",
   });
   assert.equal(event.accepted, true);
   await assert.rejects(

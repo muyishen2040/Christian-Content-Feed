@@ -157,7 +157,9 @@ export const savedResponseSchema = z
   })
   .strict();
 
-export const mutationResponseSchema = z.object({ ok: z.literal(true) }).strict();
+export const mutationResponseSchema = z
+  .object({ ok: z.literal(true) })
+  .strict();
 
 export const safetyResponseSchema = z
   .object({

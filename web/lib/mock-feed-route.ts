@@ -4,7 +4,9 @@ import { MockApiClient } from "./mock-api.ts";
 
 // An explicit environment opt-in is required, and Vercel production fails
 // closed even when someone mistakenly enables the feature flag.
-export function mockFeedEnabled(env: Record<string, string | undefined>): boolean {
+export function mockFeedEnabled(
+  env: Record<string, string | undefined>,
+): boolean {
   return (
     env.ENABLE_MOCK_FEED === "true" &&
     (env.NODE_ENV !== "production" || env.VERCEL_ENV === "preview") &&
@@ -31,7 +33,10 @@ export async function handleMockFeedGet(
     ...(params.has("limit") ? { limit: params.get("limit") } : {}),
   });
   if (!parsed.success) {
-    return Response.json({ error: "Invalid pagination parameters" }, { status: 400 });
+    return Response.json(
+      { error: "Invalid pagination parameters" },
+      { status: 400 },
+    );
   }
   try {
     const data = await new MockApiClient().getFeed(parsed.data);
@@ -40,7 +45,10 @@ export async function handleMockFeedGet(
     });
   } catch (error) {
     if (error instanceof ApiError && error.status === 400) {
-      return Response.json({ error: "Invalid pagination cursor" }, { status: 400 });
+      return Response.json(
+        { error: "Invalid pagination cursor" },
+        { status: 400 },
+      );
     }
     return Response.json({ error: "Mock feed unavailable" }, { status: 500 });
   }

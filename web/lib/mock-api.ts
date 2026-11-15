@@ -19,23 +19,37 @@ import {
 import { ApiError } from "./api-error.ts";
 import { mockStories } from "./mock-data.ts";
 
-type FeedbackState = { reaction: "interested" | "not_for_me" | null; saved: boolean };
+type FeedbackState = {
+  reaction: "interested" | "not_for_me" | null;
+  saved: boolean;
+};
 const emptyState = (): FeedbackState => ({ reaction: null, saved: false });
 type PageScope = "feed" | "saved";
 type PageVariant = "baseline" | "personalized";
 
-function encodeCursor(offset: number, scope: PageScope, variant: PageVariant): string {
+function encodeCursor(
+  offset: number,
+  scope: PageScope,
+  variant: PageVariant,
+): string {
   // Opaque to clients, not a security boundary. Real backend must use a signed,
   // ranking-snapshot cursor; do not decode or interpret this in UI components.
   const bytes = btoa(JSON.stringify({ v: 1, offset, scope, variant }));
   return bytes.replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 }
 
-function decodeCursor(cursor: string, scope: PageScope, variant: PageVariant): number {
+function decodeCursor(
+  cursor: string,
+  scope: PageScope,
+  variant: PageVariant,
+): number {
   try {
     if (!/^[a-zA-Z0-9_-]+$/.test(cursor)) throw new Error("Invalid alphabet");
-    const data: unknown = JSON.parse(atob(cursor.replaceAll("-", "+").replaceAll("_", "/")));
-    if (typeof data !== "object" || data === null) throw new Error("Invalid object");
+    const data: unknown = JSON.parse(
+      atob(cursor.replaceAll("-", "+").replaceAll("_", "/")),
+    );
+    if (typeof data !== "object" || data === null)
+      throw new Error("Invalid object");
     const c = data as Record<string, unknown>;
     if (
       c.v !== 1 ||
@@ -62,13 +76,19 @@ function page<T>(
   const { cursor, limit } = feedQuerySchema.parse(query);
   const start = cursor ? decodeCursor(cursor, scope, variant) : 0;
   if (start > items.length) {
-    throw new ApiError(400, "INVALID_CURSOR", "Cursor points outside the result set");
+    throw new ApiError(
+      400,
+      "INVALID_CURSOR",
+      "Cursor points outside the result set",
+    );
   }
   const slice = items.slice(start, start + limit);
   return {
     items: slice,
     nextCursor:
-      start + limit < items.length ? encodeCursor(start + limit, scope, variant) : null,
+      start + limit < items.length
+        ? encodeCursor(start + limit, scope, variant)
+        : null,
     start,
   };
 }
@@ -127,7 +147,8 @@ export class MockApiClient implements ApiClient {
     return {
       profile: sanitized,
       safetyState: "normal",
-      feedMode: parsed.description || parsed.topics.length ? "personalized" : "default",
+      feedMode:
+        parsed.description || parsed.topics.length ? "personalized" : "default",
     };
   }
 
@@ -161,7 +182,8 @@ export class MockApiClient implements ApiClient {
     const key = JSON.stringify(input);
     const previous = this.feedEvents.get(input.eventId);
     if (previous) {
-      if (previous !== key) throw new ApiError(409, "IDEMPOTENCY_CONFLICT", "Event ID reused");
+      if (previous !== key)
+        throw new ApiError(409, "IDEMPOTENCY_CONFLICT", "Event ID reused");
       return { eventId: input.eventId, accepted: true };
     }
     const batch = this.batches.get(input.batchId);
@@ -170,7 +192,11 @@ export class MockApiClient implements ApiClient {
       batch.variant !== input.feedVariant ||
       batch.ranks.get(input.testimonyId) !== input.rank
     ) {
-      throw new ApiError(400, "INVALID_EVENT", "Event does not match a served batch");
+      throw new ApiError(
+        400,
+        "INVALID_EVENT",
+        "Event does not match a served batch",
+      );
     }
     // UI must send impression only after viewability threshold is met.
     this.feedEvents.set(input.eventId, key);
@@ -191,7 +217,9 @@ export class MockApiClient implements ApiClient {
       throw new ApiError(404, "TESTIMONY_NOT_FOUND", "Unknown testimony");
     }
 
-    const before = { ...(this.feedback.get(input.testimonyId) ?? emptyState()) };
+    const before = {
+      ...(this.feedback.get(input.testimonyId) ?? emptyState()),
+    };
     const after = { ...before };
     if (input.action === "undo") {
       const target = this.undoable.get(input.undoEventId!);
@@ -200,7 +228,11 @@ export class MockApiClient implements ApiClient {
         target.testimonyId !== input.testimonyId ||
         this.lastEvent.get(input.testimonyId) !== input.undoEventId
       ) {
-        throw new ApiError(409, "UNDO_CONFLICT", "Only the latest feedback can be undone");
+        throw new ApiError(
+          409,
+          "UNDO_CONFLICT",
+          "Only the latest feedback can be undone",
+        );
       }
       after.reaction = target.previous.reaction;
       after.saved = target.previous.saved;
@@ -232,7 +264,9 @@ export class MockApiClient implements ApiClient {
   }
 
   async getSaved(query: FeedQuery = {}): Promise<SavedResponse> {
-    const saved = mockStories.filter((story) => this.feedback.get(story.id)?.saved);
+    const saved = mockStories.filter(
+      (story) => this.feedback.get(story.id)?.saved,
+    );
     const { items, nextCursor } = page(saved, query, "saved", "baseline");
     return { items, nextCursor };
   }

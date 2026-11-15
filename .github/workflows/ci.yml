@@ -18,7 +18,6 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
-      - run: node scripts/export-prettier.mjs
       - run: npm run format:check
       - run: npm run lint
       - run: npm run typecheck

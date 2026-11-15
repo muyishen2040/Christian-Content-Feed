@@ -9,12 +9,20 @@ import {
 test("mock feed fails closed without explicit enablement or in production", async () => {
   assert.equal(mockFeedEnabled({ NODE_ENV: "development" }), false);
   assert.equal(
-    mockFeedEnabled({ NODE_ENV: "production", VERCEL_ENV: "production", ENABLE_MOCK_FEED: "true" }),
+    mockFeedEnabled({
+      NODE_ENV: "production",
+      VERCEL_ENV: "production",
+      ENABLE_MOCK_FEED: "true",
+    }),
     false,
   );
   const response = await handleMockFeedGet(
     new Request("https://example.test/api/feed"),
-    { NODE_ENV: "production", VERCEL_ENV: "production", ENABLE_MOCK_FEED: "true" },
+    {
+      NODE_ENV: "production",
+      VERCEL_ENV: "production",
+      ENABLE_MOCK_FEED: "true",
+    },
   );
   assert.equal(response.status, 404);
   assert.equal((await response.json()).error, "Not Found");
@@ -22,7 +30,11 @@ test("mock feed fails closed without explicit enablement or in production", asyn
 });
 
 test("mock feed can be enabled on a Vercel preview or in local dev", async () => {
-  const preview = { NODE_ENV: "production", VERCEL_ENV: "preview", ENABLE_MOCK_FEED: "true" };
+  const preview = {
+    NODE_ENV: "production",
+    VERCEL_ENV: "preview",
+    ENABLE_MOCK_FEED: "true",
+  };
   assert.equal(mockFeedEnabled(preview), true);
   const response = await handleMockFeedGet(
     new Request("https://example.test/api/feed?limit=2"),
@@ -36,7 +48,9 @@ test("mock feed can be enabled on a Vercel preview or in local dev", async () =>
   assert.equal(feed.feedVariant, "baseline");
   assert.ok(feed.batchId);
   const second = await handleMockFeedGet(
-    new Request(`https://example.test/api/feed?limit=2&cursor=${feed.nextCursor}`),
+    new Request(
+      `https://example.test/api/feed?limit=2&cursor=${feed.nextCursor}`,
+    ),
     preview,
   );
   assert.equal(second.status, 200);

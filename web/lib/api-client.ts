@@ -27,7 +27,11 @@ export function createHttpApiClient(fetcher: typeof fetch = fetch): ApiClient {
     });
     if (!response.ok) {
       // Do not reflect raw text, server traces or arbitrary error bodies into the UI.
-      throw new ApiError(response.status, "HTTP_ERROR", `Request failed (${response.status})`);
+      throw new ApiError(
+        response.status,
+        "HTTP_ERROR",
+        `Request failed (${response.status})`,
+      );
     }
     return response.json();
   }
@@ -43,24 +47,37 @@ export function createHttpApiClient(fetcher: typeof fetch = fetch): ApiClient {
     },
     async saveProfile(input: ProfileInput) {
       return profileResponseSchema.parse(
-        await request("/api/profile", { method: "PUT", body: JSON.stringify(input) }),
+        await request("/api/profile", {
+          method: "PUT",
+          body: JSON.stringify(input),
+        }),
       );
     },
     async getFeed(query: FeedQuery = {}) {
-      return feedResponseSchema.parse(await request(`/api/feed${queryString(query)}`));
+      return feedResponseSchema.parse(
+        await request(`/api/feed${queryString(query)}`),
+      );
     },
     async recordFeedEvent(input: FeedEventRequest) {
       return feedEventResponseSchema.parse(
-        await request("/api/feed/events", { method: "POST", body: JSON.stringify(input) }),
+        await request("/api/feed/events", {
+          method: "POST",
+          body: JSON.stringify(input),
+        }),
       );
     },
     async sendFeedback(input: FeedbackRequest) {
       return feedbackResponseSchema.parse(
-        await request("/api/feedback", { method: "POST", body: JSON.stringify(input) }),
+        await request("/api/feedback", {
+          method: "POST",
+          body: JSON.stringify(input),
+        }),
       );
     },
     async getSaved(query: FeedQuery = {}) {
-      return savedResponseSchema.parse(await request(`/api/saved${queryString(query)}`));
+      return savedResponseSchema.parse(
+        await request(`/api/saved${queryString(query)}`),
+      );
     },
     async reset() {
       return mutationResponseSchema.parse(
