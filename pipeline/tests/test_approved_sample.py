@@ -33,6 +33,11 @@ def test_summaries_are_short_and_not_pasted_source_text():
         assert len(r["preview"]) <= 80, r["id"]
 
 
+def test_at_most_one_record_lacks_its_own_testimony_url():
+    weak = [r["id"] for r in load() if r["url_level"] != "item"]
+    assert len(weak) <= 1, weak
+
+
 def test_no_excluded_sources():
     for r in load():
         assert urlparse(r["url"]).netloc not in EXCLUDED_HOSTS, r["id"]

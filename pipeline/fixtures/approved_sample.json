@@ -100,17 +100,17 @@
       "flags": ["Deep link to this testimony's heading on a page that lists many testimonies (no separate page per testimony).", "The same page contains other testimonies with crisis-adjacent content (a suicide threat described in another item)."]
     },
     {
-      "id": "ebtcc-baptism-testimony",
-      "source": "東灣三一華人教會",
-      "title": "受洗見證",
-      "url": "https://ebtcc.org/%E8%A6%8B%E8%AD%89/",
-      "url_level": "page",
-      "language": "zh-Hans",
-      "preview": "曾想靠自己能力生活的受洗者，認識到人的有限，並在家庭危機中經歷主的托住。",
-      "tags": ["受洗", "驕傲", "家庭"],
+      "id": "cdts-leave-everything-follow",
+      "source": "基督門徒訓練神學院",
+      "title": "撇下一切跟隨主",
+      "url": "https://www.cdts.org.tw/6505-2/",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "脾氣暴躁的餐廳老闆在弟弟的邀請下踏進教會，經歷弟兄姊妹的陪伴與禱告，信主並回應蒙召。",
+      "tags": ["蒙召", "受洗", "家人信主"],
       "rights_status": "link_out",
-      "rights_evidence": "robots.txt: Allow /; footer 'Copyright © 2025 East Bay Trinity Chinese Church. All rights reserved.'",
-      "flags": ["Simplified Chinese.", "Page-level link: several testimonies on one page."]
+      "rights_evidence": "robots.txt disallows only /wp-admin/; footer '© 2025 Copyright 基督門徒訓練神學院'. No reuse terms found.",
+      "flags": ["Seminary student calling testimony; the story mentions a family member's illness, so keep the summary generic."]
     },
     {
       "id": "ctcc-what-to-learn",
