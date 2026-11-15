@@ -1,0 +1,27 @@
+name: Vercel Preview Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: "HTTPS preview deployment to verify (no private data)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check protected HTTPS preview
+        run: node web/scripts/verify-preview.mjs
+        env:
+          PREVIEW_URL: ${{ inputs.preview_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+          VERCEL_ALLOWED_PREVIEW_HOST: ${{ vars.VERCEL_ALLOWED_PREVIEW_HOST }}
