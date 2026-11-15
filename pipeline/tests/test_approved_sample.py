@@ -38,6 +38,11 @@ def test_at_most_one_record_lacks_its_own_testimony_url():
     assert len(weak) <= 1, weak
 
 
+def test_every_record_has_an_empty_review_block_for_the_reviewer():
+    for r in load():
+        assert set(r["review"]) == {"reviewer", "decision", "reason", "reviewed_on"}, r["id"]
+
+
 def test_no_excluded_sources():
     for r in load():
         assert urlparse(r["url"]).netloc not in EXCLUDED_HOSTS, r["id"]

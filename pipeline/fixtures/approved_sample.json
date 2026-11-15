@@ -5,7 +5,8 @@
     "storage_rule": "Store only title, source name, original URL, our own summary and tags. No body text and no author names.",
     "review_status": "drafted_by_assistant_pending_human_review",
     "criteria": "First-person story about God's work in the writer's life; text page; link-out rights; no crisis-adjacent content in the chosen testimony; no 真耶穌教會 or 全能神 sources; our own summary.",
-    "open_rights_item": "Samuel / MUY-43 to confirm that generating our own summary satisfies the PRD rights wording. No legal review done."
+    "open_rights_item": "Samuel / MUY-43 to confirm that generating our own summary satisfies the PRD rights wording. No legal review done.",
+    "how_to_review": "See pipeline/fixtures/REVIEW.md. Fill review.reviewer, review.decision (approve|reject), review.reason and review.reviewed_on per record, then set _meta.review_status."
   },
   "records": [
     {
@@ -16,10 +17,20 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "從小知道主耶穌卻自以為是的作者，離家北上工作後看見自己的不足，經歷神的帶領而改變。",
-      "tags": ["信仰成長", "職場", "家庭背景"],
+      "tags": [
+        "信仰成長",
+        "職場",
+        "家庭背景"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt allows /articles; footer 'All rights reserved'; About page says content is for believers to read and share freely; no licence.",
-      "flags": []
+      "flags": [],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "donghu-dark-curse",
@@ -29,10 +40,20 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "長年害怕黑夜與鬼神、倚靠拜拜與算命的人，因接觸福音而從恐懼中走向信主。",
-      "tags": ["民間信仰", "恐懼", "得救"],
+      "tags": [
+        "民間信仰",
+        "恐懼",
+        "得救"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt: empty Disallow; footer '© 2025 TAIPEI DONGHU CHRUCH', no reuse terms.",
-      "flags": []
+      "flags": [],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "wol-god-my-help",
@@ -42,10 +63,20 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "受洗後的作者在登山途中遇到身體危機，向主呼求並經歷上帝的幫助。",
-      "tags": ["禱告", "受洗後", "蒙拯救"],
+      "tags": [
+        "禱告",
+        "受洗後",
+        "蒙拯救"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "No robots.txt (404); footer '© 基督教生命之道靈糧堂 | All rights reserved'.",
-      "flags": []
+      "flags": [],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "ttlc-let-go",
@@ -55,10 +86,22 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "因眼疾被迫臥床休息的傳道人，在無助中學習聆聽上帝的話，也看見同工被成全。",
-      "tags": ["休息", "聆聽", "服事"],
+      "tags": [
+        "休息",
+        "聆聽",
+        "服事"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt blocks only /search and /share-widget. Footer: CC BY-NC-ND 3.0 Taiwan, and 'copyright belongs to 台北真理堂; reprint needs consent'.",
-      "flags": ["ND licence: our generated summary may count as an adaptation; NC: app must be non-commercial. For MUY-43 / Samuel."]
+      "flags": [
+        "ND licence: our generated summary may count as an adaptation; NC: app must be non-commercial. For MUY-43 / Samuel."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "tn179-restore-marriage-relationship",
@@ -68,10 +111,22 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "信主前脾氣差、常以酒解壓的人，信主後性情被改變，與前夫的關係得到恢復。",
-      "tags": ["關係", "性情改變", "家庭"],
+      "tags": [
+        "關係",
+        "性情改變",
+        "家庭"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt blocks only /wp-admin/; footer '© Copyright 2025 … All Rights Reserved'.",
-      "flags": ["Source page uses stock images ('圖 網路示意'): do not use thumbnails."]
+      "flags": [
+        "Source page uses stock images ('圖 網路示意'): do not use thumbnails."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "tschurch-second-birthday",
@@ -81,10 +136,22 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "盼望多年的母親終於受洗，作者回顧母親從遍訪宮廟求神，到認識上帝的歷程。",
-      "tags": ["家人得救", "受洗", "民間信仰"],
+      "tags": [
+        "家人得救",
+        "受洗",
+        "民間信仰"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt blocks only /wp-admin/; footer 'Copyright © 2020 台灣基督長老教會-德生教會 All Rights Reserved'.",
-      "flags": ["Source page title includes the author's name; do not store it."]
+      "flags": [
+        "Source page title includes the author's name; do not store it."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "taiwanbible-why-i-believe",
@@ -94,10 +161,25 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "小學時因一張夏令營傳單第一次踏進教會的作者，回顧那段與教會相遇的經歷。",
-      "tags": ["童年", "得救", "夏令營"],
+      "tags": [
+        "童年",
+        "得救",
+        "夏令營"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt: 'Allow: /web/'; its Disallow rules (e.g. /gospel/) apply to root-level paths and do not match /web/gospel/. No reuse terms found on the page.",
-      "flags": ["Rights weaker than church-run sources: the site publishes testimonies submitted by individuals ('刊登其他見證'), so the copyright holder is the author.", "Last modified 2026-06-02.", "The page shows the author's pseudonym; do not store it.", "An earlier candidate from this site (ID 8528) was rejected: the author describes several suicide attempts."]
+      "flags": [
+        "Rights weaker than church-run sources: the site publishes testimonies submitted by individuals ('刊登其他見證'), so the copyright holder is the author.",
+        "Last modified 2026-06-02.",
+        "The page shows the author's pseudonym; do not store it.",
+        "An earlier candidate from this site (ID 8528) was rejected: the author describes several suicide attempts."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "cdts-leave-everything-follow",
@@ -107,10 +189,22 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "脾氣暴躁的餐廳老闆在弟弟的邀請下踏進教會，經歷弟兄姊妹的陪伴與禱告，信主並回應蒙召。",
-      "tags": ["蒙召", "受洗", "家人信主"],
+      "tags": [
+        "蒙召",
+        "受洗",
+        "家人信主"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "robots.txt disallows only /wp-admin/; footer '© 2025 Copyright 基督門徒訓練神學院'. No reuse terms found.",
-      "flags": ["Seminary student calling testimony; the story mentions a family member's illness, so keep the summary generic."]
+      "flags": [
+        "Seminary student calling testimony; the story mentions a family member's illness, so keep the summary generic."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "ctcc-what-to-learn",
@@ -120,10 +214,22 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "重返職場後遇到同事的無禮對待，作者每天向神詢問要在其中學習什麼。",
-      "tags": ["職場", "忍耐", "禱告"],
+      "tags": [
+        "職場",
+        "忍耐",
+        "禱告"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "Google Sites; robots.txt disallows only /feeds and /*/_/. No reuse terms found on the page.",
-      "flags": ["Church is in the US (San Jose)."]
+      "flags": [
+        "Church is in the US (San Jose)."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     },
     {
       "id": "taiping-baptism-testimony",
@@ -133,10 +239,23 @@
       "url_level": "item",
       "language": "zh-Hant",
       "preview": "原本誤解教會、容易緊張不安的作者，因朋友邀請和一次禱告的經歷而信主受洗。",
-      "tags": ["受洗", "禱告", "平安"],
+      "tags": [
+        "受洗",
+        "禱告",
+        "平安"
+      ],
       "rights_status": "link_out",
       "rights_evidence": "WordPress.com blog; robots.txt disallows only admin and login paths; no licence or reuse terms found on the page.",
-      "flags": ["Source page title includes the author's name; do not store it.", "Post is from 2017."]
+      "flags": [
+        "Source page title includes the author's name; do not store it.",
+        "Post is from 2017."
+      ],
+      "review": {
+        "reviewer": null,
+        "decision": null,
+        "reason": null,
+        "reviewed_on": null
+      }
     }
   ]
 }
