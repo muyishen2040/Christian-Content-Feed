@@ -1,0 +1,142 @@
+{
+  "_meta": {
+    "purpose": "Link-out sample for MUY-15/MUY-18: one testimony from each of 10 distinct sources. Real source pages, not fictional.",
+    "checked_on": "2026-11-15",
+    "storage_rule": "Store only title, source name, original URL, our own summary and tags. No body text and no author names.",
+    "review_status": "drafted_by_assistant_pending_human_review",
+    "criteria": "First-person story about God's work in the writer's life; text page; link-out rights; no crisis-adjacent content in the chosen testimony; no 真耶穌教會 or 全能神 sources; our own summary.",
+    "open_rights_item": "Samuel / MUY-43 to confirm that generating our own summary satisfies the PRD rights wording. No legal review done."
+  },
+  "records": [
+    {
+      "id": "luke54-40667",
+      "source": "水深之處 (luke54.org)",
+      "title": "我如何由小惡魔「變身」為好孩子",
+      "url": "https://www.luke54.org/articles/40667",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "從小知道主耶穌卻自以為是的作者，離家北上工作後看見自己的不足，經歷神的帶領而改變。",
+      "tags": ["信仰成長", "職場", "家庭背景"],
+      "rights_status": "link_out",
+      "rights_evidence": "robots.txt allows /articles; footer 'All rights reserved'; About page says content is for believers to read and share freely; no licence.",
+      "flags": []
+    },
+    {
+      "id": "donghu-dark-curse",
+      "source": "東湖禮拜堂",
+      "title": "天黑的咒詛",
+      "url": "https://dhchurch.org.tw/2024/10/21/%e3%80%8a%e8%a6%8b%e8%ad%89%e5%88%86%e4%ba%ab%e3%80%8b%e5%a4%a9%e9%bb%91%e7%9a%84%e5%92%92%e8%a9%9b/",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "長年害怕黑夜與鬼神、倚靠拜拜與算命的人，因接觸福音而從恐懼中走向信主。",
+      "tags": ["民間信仰", "恐懼", "得救"],
+      "rights_status": "link_out",
+      "rights_evidence": "robots.txt: empty Disallow; footer '© 2025 TAIPEI DONGHU CHRUCH', no reuse terms.",
+      "flags": []
+    },
+    {
+      "id": "wol-god-my-help",
+      "source": "生命之道靈糧堂",
+      "title": "上帝是我隨時的幫助",
+      "url": "https://wol.org.tw/wol/%e4%b8%8a%e5%b8%9d%e6%98%af%e6%88%91%e9%9a%a8%e6%99%82%e7%9a%84%e5%b9%ab%e5%8a%a9/",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "受洗後的作者在登山途中遇到身體危機，向主呼求並經歷上帝的幫助。",
+      "tags": ["禱告", "受洗後", "蒙拯救"],
+      "rights_status": "link_out",
+      "rights_evidence": "No robots.txt (404); footer '© 基督教生命之道靈糧堂 | All rights reserved'.",
+      "flags": []
+    },
+    {
+      "id": "ttlc-let-go",
+      "source": "台北真理堂愛說故事",
+      "title": "放手，讓上帝動工",
+      "url": "https://ttlctestimony.blogspot.com/2026/11/blog-post_13.html",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "因眼疾被迫臥床休息的傳道人，在無助中學習聆聽上帝的話，也看見同工被成全。",
+      "tags": ["休息", "聆聽", "服事"],
+      "rights_status": "link_out",
+      "rights_evidence": "robots.txt blocks only /search and /share-widget. Footer: CC BY-NC-ND 3.0 Taiwan, and 'copyright belongs to 台北真理堂; reprint needs consent'.",
+      "flags": ["ND licence: our generated summary may count as an adaptation; NC: app must be non-commercial. For MUY-43 / Samuel."]
+    },
+    {
+      "id": "tn179-restore-marriage-relationship",
+      "source": "貴格會宜蘭天恩教會",
+      "title": "恢復和前夫的關係",
+      "url": "https://tn179.com/witness_14/",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "信主前脾氣差、常以酒解壓的人，信主後性情被改變，與前夫的關係得到恢復。",
+      "tags": ["關係", "性情改變", "家庭"],
+      "rights_status": "link_out",
+      "rights_evidence": "robots.txt blocks only /wp-admin/; footer '© Copyright 2025 … All Rights Reserved'.",
+      "flags": ["Source page uses stock images ('圖 網路示意'): do not use thumbnails."]
+    },
+    {
+      "id": "tschurch-second-birthday",
+      "source": "德生教會",
+      "title": "第二個生日的見證",
+      "url": "https://www.tschurch.org/%E7%AC%AC%E4%BA%8C%E5%80%8B%E7%94%9F%E6%97%A5%E7%9A%84%E8%A6%8B%E8%AD%89-%E8%83%A1%E5%BF%A0%E9%8A%98%E7%89%A7%E5%B8%AB/",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "盼望多年的母親終於受洗，作者回顧母親從遍訪宮廟求神，到認識上帝的歷程。",
+      "tags": ["家人得救", "受洗", "民間信仰"],
+      "rights_status": "link_out",
+      "rights_evidence": "robots.txt blocks only /wp-admin/; footer 'Copyright © 2020 台灣基督長老教會-德生教會 All Rights Reserved'.",
+      "flags": ["Source page title includes the author's name; do not store it."]
+    },
+    {
+      "id": "tektung-grace-in-my-home",
+      "source": "竹塘基督長老教會",
+      "title": "恩典在我家",
+      "url": "https://www.tektung-pct.org/%E9%A6%96%E9%A0%81-home/%E8%A6%8B%E8%AD%89%E5%88%86%E4%BA%AB-witness#h.p_xYmBNdj0Qdq3",
+      "url_level": "item_anchor",
+      "language": "zh-Hant",
+      "preview": "從兒時聽到的福音種子、服役時受洗，到信仰一度流浪，作者回顧上帝在家中的恩典之路。",
+      "tags": ["受洗", "信仰成長", "家庭"],
+      "rights_status": "link_out",
+      "rights_evidence": "Google Sites; robots.txt disallows only /feeds and /*/_/. Footer '版權所有 2019 All Rights Reserved'.",
+      "flags": ["Deep link to this testimony's heading on a page that lists many testimonies (no separate page per testimony).", "The same page contains other testimonies with crisis-adjacent content (a suicide threat described in another item)."]
+    },
+    {
+      "id": "ebtcc-baptism-testimony",
+      "source": "東灣三一華人教會",
+      "title": "受洗見證",
+      "url": "https://ebtcc.org/%E8%A6%8B%E8%AD%89/",
+      "url_level": "page",
+      "language": "zh-Hans",
+      "preview": "曾想靠自己能力生活的受洗者，認識到人的有限，並在家庭危機中經歷主的托住。",
+      "tags": ["受洗", "驕傲", "家庭"],
+      "rights_status": "link_out",
+      "rights_evidence": "robots.txt: Allow /; footer 'Copyright © 2025 East Bay Trinity Chinese Church. All rights reserved.'",
+      "flags": ["Simplified Chinese.", "Page-level link: several testimonies on one page."]
+    },
+    {
+      "id": "ctcc-what-to-learn",
+      "source": "迦南臺灣基督教會",
+      "title": "神啊，祢要我學習什麼？",
+      "url": "https://sites.google.com/view/ctcc-mm/%E8%81%9A%E6%9C%83%E8%88%87%E6%95%AC%E6%8B%9C/%E8%A6%8B%E8%AD%89%E5%88%86%E4%BA%AB-%E6%96%87%E5%AD%97/%E8%A6%8B%E8%AD%89%E5%88%86%E4%BA%AB%E6%96%87%E5%AD%972024/%E8%A6%8B%E8%AD%89%E5%88%86%E4%BA%AB-2024-11-29",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "重返職場後遇到同事的無禮對待，作者每天向神詢問要在其中學習什麼。",
+      "tags": ["職場", "忍耐", "禱告"],
+      "rights_status": "link_out",
+      "rights_evidence": "Google Sites; robots.txt disallows only /feeds and /*/_/. No reuse terms found on the page.",
+      "flags": ["Church is in the US (San Jose)."]
+    },
+    {
+      "id": "taiping-baptism-testimony",
+      "source": "基督教浸禮聖經會太平會幕堂",
+      "title": "受洗見證文",
+      "url": "https://taiping2014.wordpress.com/2017/04/22/%E5%8F%AF%E6%AC%A3%E5%A7%8A%E5%A6%B9%E5%8F%97%E6%B4%97%E8%A6%8B%E8%AD%89%E6%96%87/",
+      "url_level": "item",
+      "language": "zh-Hant",
+      "preview": "原本誤解教會、容易緊張不安的作者，因朋友邀請和一次禱告的經歷而信主受洗。",
+      "tags": ["受洗", "禱告", "平安"],
+      "rights_status": "link_out",
+      "rights_evidence": "WordPress.com blog; robots.txt disallows only admin and login paths; no licence or reuse terms found on the page.",
+      "flags": ["Source page title includes the author's name; do not store it.", "Post is from 2017."]
+    }
+  ]
+}
