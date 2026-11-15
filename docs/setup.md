@@ -30,4 +30,5 @@ python -m pytest pipeline/tests
 python -m pytest ml-service/tests
 ```
 
-The embedding service requires additional model dependencies and a locally cached BGE model. See [embedding service setup](embedding-service.md) for local startup, authentication, and the work remaining before deployment. The content importer is not yet implemented. Never commit credentials or personal descriptions.
+See [embedding service setup](embedding-service.md) to download the model and start
+the service. Never commit credentials, model weights, or personal descriptions.

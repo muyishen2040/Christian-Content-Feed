@@ -1,4 +1,4 @@
-# Supabase schema and security (MUY-12)
+# Supabase schema and security
 
 ## Local / staging migration workflow
 
@@ -19,17 +19,22 @@
 | `testimony_embeddings` | service-role only, versioned by model/version/dimension |
 | `user_profiles` | own authenticated anonymous user ID only |
 | `feedback` | own event records only; `(user_id,request_id)` is idempotent |
-| `saved_testimonies` | own Saved set only; future MUY-29 backend updates transactionally |
+| `saved_testimonies` | own saved set only; updates require a transactional backend |
 | `feed_events` | own impressions/events only |
 
 Supabase Auth anonymous sessions have a **signed-in `authenticated` JWT role** with `auth.uid()`. A bare Supabase `anon` project key has no owner ID and cannot read private profiles, feedback, Saved, or events. Never expose the service-role key to frontend or previews.
 
 Testimony attribution is denormalized into `source_name` and `source_url` so clients never need to SELECT the private `sources` table. A source approval predicate (SECURITY DEFINER, fixed search path) prevents reads after source rights are revoked; a trigger refuses unapproved publications. Publish only after human source-rights and editorial review. Content is not made public by the importer.
 
-The embedding column is variable-dimension `extensions.vector`, validated by `embedding_dim`. **Do not hardcode a vector index dimension until MUY-21 chooses the embedding model.** B-tree indexes cover model/version and feed ordering; create an appropriate dimension-specific pgvector ANN index as part of MUY-23.
+The embedding column is variable-dimension `extensions.vector`, validated by
+`embedding_dim`. The selected BGE model produces 512-dimensional vectors. Choose a
+dimension-specific pgvector ANN index that matches the stored model and version.
 
 ## Reproducibility and protections
 
-All schema objects, constraints, grants, RLS policies and indexes are versioned in the migration. DDL uses `IF NOT EXISTS` or drop/recreate policy/trigger to allow a deliberate local rerun; production migration history applies each file once. Automated integration SQL proves two synthetic users cannot read/write across identities and unauthenticated clients cannot read draft content or source metadata. Source rights and user descriptions must not appear in public fixtures/logs.
+Schema objects, constraints, grants, RLS policies, and indexes are versioned in the
+migration. The integration SQL tests isolation between synthetic users and access to
+unpublished content. Keep source rights and user descriptions out of public fixtures and logs.
 
-**Not yet validated by this PR without a configured Supabase local/staging instance:** actual clean `supabase db reset`, live anonymous JWT tests, and review of query plans. These are required before marking MUY-12 Done.
+Validate a clean `supabase db reset`, live anonymous JWT access, and query plans against
+a configured local or staging instance before relying on the schema.

@@ -1,23 +1,29 @@
 # Embedding service
 
-MUY-22 is in progress. The service uses the full-precision ONNX export of BGE small Chinese and returns normalized 512-dimensional vectors. A bearer token protects the inference endpoint. Use fictional input until deployment, privacy, and safety checks are complete.
+The service uses the full-precision ONNX export of BGE small Chinese to produce
+normalized 512-dimensional vectors. The inference endpoint requires a bearer token.
+Use fictional input until privacy, access, and safety safeguards have been verified.
 
 ## Install and prepare
 
-From the repository root, activate the Python 3.12 virtual environment described in [setup.md](setup.md), then run:
+Activate the Python 3.12 environment described in [setup.md](setup.md), then run:
 
 ```sh
 python -m pip install -r ml-service/requirements.txt -r ml-service/requirements-test.txt
 python ml-service/prepare_model.py
 ```
 
-The preparation script downloads the pinned public ONNX export and tokenizer and verifies their SHA-256 hashes. Assets live in the Git-ignored `ml-service/model_assets/` directory; no model weights are committed. At inference time the service reads local files and does not send text to a model provider. Python inference uses ONNX Runtime and does not require PyTorch or Transformers.
+The preparation script downloads the pinned ONNX model and tokenizer, verifies their
+SHA-256 hashes, and stores them in the Git-ignored `ml-service/model_assets/`.
+Inference runs locally with ONNX Runtime and does not send text to a model provider.
 
-The ONNX graph is from `Xenova/bge-small-zh-v1.5` at revision `fcecc3c5fef6becfa2b2bdda15c1c938857be534`; the original tokenizer is from `BAAI/bge-small-zh-v1.5` at revision `7999e1d3359715c523056ef9478215996d62a620`. On the local fictional fixture, the ONNX output and tokenization matched the reference model closely, with the same ordered top five for all 24 queries. This small comparison is not pilot validation.
+The graph comes from `Xenova/bge-small-zh-v1.5` at
+`fcecc3c5fef6becfa2b2bdda15c1c938857be534`. The tokenizer comes from
+`BAAI/bge-small-zh-v1.5` at `7999e1d3359715c523056ef9478215996d62a620`.
 
 ## Run locally
 
-In PowerShell, generate a temporary secret, then run the service bound to your own computer:
+Generate a temporary secret in PowerShell, then start the service on your computer:
 
 ```powershell
 $env:EMBEDDING_SERVICE_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
@@ -25,34 +31,58 @@ Set-Location ml-service
 python -m uvicorn app:app --host 127.0.0.1 --port 8000 --no-access-log --log-level warning
 ```
 
-The service refuses to start with a missing or short secret. In another terminal, set the same `EMBEDDING_SERVICE_TOKEN` value without committing it; do not expose it in shared scripts. Send a fictional request with an `Authorization: Bearer <token>` header:
+The token must contain at least 32 bytes. Send a fictional request to `POST /embed`
+with an `Authorization: Bearer <token>` header:
 
 ```json
-{"text":"希望認識新朋友", "kind":"query"}
+{"text":"希望認識新朋友","kind":"query"}
 ```
 
-`POST /embed` returns `vector`, `dimension`, `model`, `revision`, and `export_revision`. `kind` is `query` for a reader's description and `passage` for an approved testimony representation. For queries the service adds BGE's retrieval instruction. Model input is truncated at 512 tokens including special tokens and the instruction; request text is bounded at 8,000 characters and the HTTP body at 128 KiB. `GET /health` returns status after startup. Invalid requests return generic errors without echoing text. Tests use a fake encoder so normal CI does not download model weights.
+Use `query` for a reader description or `passage` for approved testimony text.
+The service adds BGE's retrieval instruction to queries and truncates model input to
+512 tokens. Request text is limited to 8,000 characters and the HTTP body to 128 KiB.
 
-For local checks:
+The response includes `vector`, `dimension`, `model`, `revision`, and
+`export_revision`. `GET /health` reports startup status. Validation errors do
+not echo submitted text.
+
+Run the tests from the repository root:
 
 ```sh
 python -m pytest ml-service/tests
 ```
 
-## Credentials and recovery
+Contract tests use a fake encoder. Reference-model tests run when model assets are present.
 
-Use a randomly generated service token with at least 32 bytes and store it as a server-side Vercel secret, never in browser code. Use different values for preview and production. Configure the corresponding caller with the same token, its environment-specific service URL, and OIDC enabled for protected Vercel deployments. The receiving service must trust only the intended caller and environment. Do not place the token in URLs, source files, or logs.
+## Deploy and protect
 
-To rotate a token, update the service and caller secrets for the same environment, redeploy both, and verify with fictional input that authorized requests succeed and the old token is rejected. The service currently accepts one token at a time, so a coordinated rotation can cause a temporary interruption; the caller must use the curated-feed fallback during that period. If the new deployments fail, redeploy the prior known-good code and matching secrets, then test again. Disable any compromised token promptly.
+`ml-service/vercel.json` configures a separate FastAPI project and downloads verified
+assets during the build. Use HTTPS, keep deployment protection enabled, and configure
+separate secrets and Trusted Sources rules for each caller and environment.
 
-## Vercel test and pilot safeguards
+Set `EMBEDDING_SERVICE_TOKEN` as a server-side secret in the service and its caller;
+never put it in browser code, URLs, or logs. Set the caller's
+`EMBEDDING_SERVICE_URL` and enable `EMBEDDING_SERVICE_USE_VERCEL_OIDC` when protected.
 
-`ml-service/vercel.json` configures a separate FastAPI project and downloads verified assets at build time. The protected `christian-feed-embedding-test` preview was built on Vercel using fictional input on 2026-11-15. The build log reported a 256.96 MB bundle before Vercel's optimization. The deployed service returned a normalized 512-dimensional vector matching local ONNX inference, rejected a request without the application token, and returned generic errors for invalid and oversized requests. Three warm authenticated requests took 81.6–93.7 ms end-to-end from the test computer. A separate instrumented preview recorded one model initialization of 1.45 seconds and 233.4 MiB peak process memory after a short inference. These limited measurements are not latency, memory, or cost guarantees; projected usage remains unverified. The tested fictional sentinel was not found in the available runtime logs. The test project is separate from the website and has Vercel deployment protection enabled.
+The server-only client in `web/lib/embedding-client.ts` checks the model version and
+vector and returns a fallback on failure. It times out after eight seconds. Call it for
+personalization only after the description has passed the required safety check.
 
-A separate Next.js smoke-test preview successfully called the embedding preview with a short-lived Vercel OIDC token and the application token. The service project trusts only that smoke-test project's preview environment for the test. The real website has not been connected: its preview and production Trusted Sources rules and secrets require separate, environment-specific configuration. The caller helper is `web/lib/embedding-client.ts`; it returns a fallback on service errors and must only receive a personalization query after the safety check.
+Configure rate limits for the public caller and the service. An IP-based service limit
+may group many users behind one server-side caller; the model lock is not a rate limiter.
+Verify application, proxy, platform, and exception logs do not contain submitted text.
 
-Vercel's published Hobby allowances include 4 active CPU-hours, 360 GB-hours of provisioned memory, and 1 million function invocations per month. These are shared usage allowances, not a capacity estimate for this model. Peak process memory is not the same as provisioned memory, and startup frequency, input length, concurrent traffic, and other projects affect actual usage. Check the team's usage dashboard during a realistic fictional-data pilot before relying on these limits. Hobby is restricted to personal, non-commercial use; confirm the intended use fits the plan.
+Review hosting privacy and retention settings, usage limits, and expected load before
+accepting personal text. The service does not handle consent or crisis detection.
+See the [Vercel Python runtime](https://vercel.com/docs/functions/runtimes/python)
+and [Hobby plan](https://vercel.com/docs/plans/hobby) documentation.
 
-Before a pilot, configure and verify the real website's protected service-to-service access, deployment-level rate limits, credential rotation, and verification that application, proxy, platform, and exception logs never contain request text. The client has an eight-second timeout. The in-process model lock is not a rate limiter across requests or instances. A per-IP limit at the embedding service may group multiple users behind the same server-side caller, so limits also need to be designed around the public caller. Confirm privacy and retention settings for the chosen host. The service alone does not perform crisis detection or consent handling.
+## Rotate credentials
 
-Sources: [Vercel Python runtime](https://vercel.com/docs/functions/runtimes/python), [Vercel Hobby plan](https://vercel.com/docs/plans/hobby).
+Update the service and caller secrets for the same environment, redeploy both, and test
+with fictional input. Verify the new token works and the old one is rejected. The service
+accepts one token at a time, so coordinated rotation can briefly interrupt inference.
+
+Use the curated-feed fallback during an interruption. If deployment fails, restore the
+last known-good code and matching secrets, then test again. Disable compromised tokens
+promptly.
