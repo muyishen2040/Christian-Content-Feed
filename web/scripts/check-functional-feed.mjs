@@ -98,7 +98,11 @@ try {
   assert.equal(await page.locator('[data-testid="testimony-card"]').count(), 6);
   assert.ok(cursors.includes("next-page"), "The next opaque cursor must be sent unchanged");
   assert.equal(await page.getByTestId("load-more").count(), 0);
-  await page.locator('[data-testid="story-open"]').nth(5).click();
+  const lastStory = page.locator('[data-testid="story-open"]').nth(5);
+  await lastStory.scrollIntoViewIfNeeded();
+  const beforeArticle = await page.evaluate(() => window.scrollY);
+  assert.ok(beforeArticle > 400, "The deep feed card must require scrolling");
+  await lastStory.click();
   await page.getByRole("heading", { name: "測試見證故事 6" }).waitFor();
   assert.equal(await page.getByText("本頁僅提供經審核的摘要。", { exact: false }).count(), 1);
   assert.equal(await page.locator(".article-paragraph").count(), 0,
@@ -110,7 +114,16 @@ try {
   await page.getByRole("link", { name: "← 返回故事" }).click();
   await page.locator('[data-testid="testimony-card"]').nth(5).waitFor();
   assert.equal(await page.locator('[data-testid="testimony-card"]').count(), 6);
-  await page.waitForFunction(() => window.scrollY > 400);
+  try {
+    await page.waitForFunction(() => window.scrollY > 400, null, { timeout: 8000 });
+  } catch {
+    const returnedTo = await page.evaluate(() => ({
+      scrollY: window.scrollY,
+      stored: window.sessionStorage.getItem("testimony-feed:scroll-position"),
+      scrollHeight: document.documentElement.scrollHeight,
+    }));
+    throw new Error(`Feed scroll restoration failed (before ${beforeArticle}, after ${JSON.stringify(returnedTo)})`);
+  }
   console.log("PASS: page loading, authorized thumbnails, source attribution, measured impressions, deduplicated pagination, article and scroll restore");
   await page.close();
 

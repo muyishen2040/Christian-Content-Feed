@@ -33,7 +33,7 @@ The first request uses `getFeed({ limit: 4 })`; subsequent requests pass the ret
 
 Additional pages load when an IntersectionObserver sees the bottom sentinel, with an explicit **載入更多故事** button for accessibility and manual recovery. Empty data produces a dedicated empty state. Failed requests produce a retry action; previously loaded content remains visible if a later page fails.
 
-The session provider stays mounted across client-side feed ↔ article navigation. It keeps already loaded pages, local demonstration feedback, and the last viewport position in memory, then restores the viewport on return. **No personal descriptions, cursors or browsing history are persisted to localStorage or server storage by this frontend.** A full page reload or direct deep link to an unknown real story may lose in-memory context. Direct-link support requires a separate authenticated, rights-aware single-story API.
+The session provider stays mounted across client-side feed ↔ article navigation. It keeps already loaded pages, local demonstration feedback, and the last viewport position in memory, then restores the viewport on return. A single **numeric scroll offset** is temporarily placed in `sessionStorage` during an internal story visit, then cleared on successful restoration. **No personal descriptions, cursor tokens, story text, or browsing history are persisted to localStorage or application servers by this frontend.** A full page reload or direct deep link to an unknown real story may lose in-memory context. Direct-link support requires a separate authenticated, rights-aware single-story API.
 
 ## Source content, article view and image rights
 
