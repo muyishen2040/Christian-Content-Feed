@@ -11,7 +11,15 @@ import type { FeedEntry } from "@/lib/feed-pagination";
 function FeedContent() {
   const feed = useFeedSession();
   const pathname = usePathname();
-  const { recordEvent, loadMore, status, hasLoaded, readPosition, rememberPosition, nextCursor } = feed;
+  const {
+    recordEvent,
+    loadMore,
+    status,
+    hasLoaded,
+    readPosition,
+    rememberPosition,
+    nextCursor,
+  } = feed;
   const restoring = useRef(false);
   const loadTrigger = useRef<HTMLDivElement>(null);
   const onImpression = useCallback(
