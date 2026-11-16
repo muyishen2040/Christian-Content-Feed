@@ -1,4 +1,4 @@
-# Chinese embedding evaluation (MUY-21)
+# Chinese embedding evaluation
 
 This experiment compares `BAAI/bge-small-zh-v1.5` and `intfloat/multilingual-e5-small` locally on CPU. It does not call a hosted AI API. Downloads from Hugging Face contain model files only; the examples are encoded locally. The fixture contains entirely fictional stories and fictional queries, not actual testimonies or user descriptions.
 
