@@ -10,8 +10,16 @@ import {
   type ReactNode,
 } from "react";
 import { createApiClient } from "@/lib/api-client";
-import type { ApiClient, FeedEventRequest, FeedResponse } from "@/lib/contracts";
-import { feedEventFor, mergeFeedPage, type FeedEntry } from "@/lib/feed-pagination";
+import type {
+  ApiClient,
+  FeedEventRequest,
+  FeedResponse,
+} from "@/lib/contracts";
+import {
+  feedEventFor,
+  mergeFeedPage,
+  type FeedEntry,
+} from "@/lib/feed-pagination";
 
 type FeedStatus = "idle" | "loading" | "ready" | "error";
 type PreviewReaction = "interested" | "not_for_me" | null;
@@ -71,7 +79,9 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
   const loadMore = useCallback(async () => {
     if (fetching.current || (state.hasLoaded && !state.nextCursor)) return;
     fetching.current = true;
-    const cursor = state.hasLoaded ? state.nextCursor ?? undefined : undefined;
+    const cursor = state.hasLoaded
+      ? (state.nextCursor ?? undefined)
+      : undefined;
     setState((previous) => ({ ...previous, status: "loading", error: null }));
     try {
       const response = await client.getFeed({ limit: PAGE_SIZE, cursor });

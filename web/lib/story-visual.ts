@@ -2,7 +2,10 @@ import type { Story } from "./contracts.ts";
 
 // An image may be displayed for real stories only when the catalog explicitly
 // supplies an HTTPS URL and confirms that display rights were reviewed.
-export function storyVisual(story: Story, rank: number): {
+export function storyVisual(
+  story: Story,
+  rank: number,
+): {
   className: string;
   backgroundImage?: string;
   hasImage: boolean;

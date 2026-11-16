@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useFeedSession } from "./feed-session-provider";
 import { StoryVisibility } from "./story-visibility";
 import { TestimonyCard } from "./ui/testimony-card";
@@ -55,9 +50,17 @@ function FeedContent() {
     return () => observer.disconnect();
   }, [feed.loadMore, feed.nextCursor, feed.status]);
 
-  if (!feed.hasLoaded && (feed.status === "loading" || feed.status === "idle")) {
+  if (
+    !feed.hasLoaded &&
+    (feed.status === "loading" || feed.status === "idle")
+  ) {
     return (
-      <div className="feed-loading" role="status" aria-live="polite" data-testid="feed-loading">
+      <div
+        className="feed-loading"
+        role="status"
+        aria-live="polite"
+        data-testid="feed-loading"
+      >
         <div className="feed-loading-card" aria-hidden="true" />
         <p>正在準備故事…</p>
       </div>
@@ -69,7 +72,10 @@ function FeedContent() {
       <div className="feed-state" role="alert" data-testid="feed-error">
         <h2>暫時無法取得故事</h2>
         <p>{feed.error}</p>
-        <button className="ui-button ui-button--primary" onClick={() => void feed.loadMore()}>
+        <button
+          className="ui-button ui-button--primary"
+          onClick={() => void feed.loadMore()}
+        >
           重試載入
         </button>
       </div>
@@ -122,15 +128,27 @@ function FeedContent() {
                       label={`${story.title}的回饋`}
                       reaction={selected.reaction}
                       saved={selected.saved}
-                      onInterested={() => feed.updatePreviewFeedback(story.id, {
-                        reaction: selected.reaction === "interested" ? null : "interested",
-                      })}
-                      onNotForMe={() => feed.updatePreviewFeedback(story.id, {
-                        reaction: selected.reaction === "not_for_me" ? null : "not_for_me",
-                      })}
-                      onSave={() => feed.updatePreviewFeedback(story.id, {
-                        saved: !selected.saved,
-                      })}
+                      onInterested={() =>
+                        feed.updatePreviewFeedback(story.id, {
+                          reaction:
+                            selected.reaction === "interested"
+                              ? null
+                              : "interested",
+                        })
+                      }
+                      onNotForMe={() =>
+                        feed.updatePreviewFeedback(story.id, {
+                          reaction:
+                            selected.reaction === "not_for_me"
+                              ? null
+                              : "not_for_me",
+                        })
+                      }
+                      onSave={() =>
+                        feed.updatePreviewFeedback(story.id, {
+                          saved: !selected.saved,
+                        })
+                      }
                     />
                   ) : undefined
                 }
@@ -147,13 +165,19 @@ function FeedContent() {
       {feed.status === "error" ? (
         <div className="feed-pagination-status" role="alert">
           <p>{feed.error}</p>
-          <button type="button" className="ui-button ui-button--secondary" onClick={() => void feed.loadMore()}>
+          <button
+            type="button"
+            className="ui-button ui-button--secondary"
+            onClick={() => void feed.loadMore()}
+          >
             再試一次
           </button>
         </div>
       ) : null}
       {feed.status === "loading" ? (
-        <p className="feed-pagination-status" role="status">正在載入更多故事…</p>
+        <p className="feed-pagination-status" role="status">
+          正在載入更多故事…
+        </p>
       ) : null}
       {feed.nextCursor && feed.status !== "loading" ? (
         <div className="feed-pagination-status">
@@ -167,7 +191,11 @@ function FeedContent() {
           </button>
         </div>
       ) : null}
-      <div ref={loadTrigger} className="feed-load-sentinel" aria-hidden="true" />
+      <div
+        ref={loadTrigger}
+        className="feed-load-sentinel"
+        aria-hidden="true"
+      />
       {feed.hasLoaded && !feed.nextCursor && feed.status === "ready" ? (
         <p className="feed-end-note">已顯示目前所有故事</p>
       ) : null}

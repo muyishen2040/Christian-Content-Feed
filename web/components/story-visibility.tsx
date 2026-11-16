@@ -69,5 +69,9 @@ export function StoryVisibility({
     };
   }, [entry, onImpression]);
 
-  return <div ref={elementRef} data-testid="visible-story">{children}</div>;
+  return (
+    <div ref={elementRef} data-testid="visible-story">
+      {children}
+    </div>
+  );
 }

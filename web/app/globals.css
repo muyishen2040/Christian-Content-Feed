@@ -798,14 +798,19 @@ a {
   font-size: 13px;
   color: var(--ui-text-muted);
 }
-.feed-pagination-status, .feed-end-note {
+.feed-pagination-status,
+.feed-end-note {
   padding: 24px 0 4px;
   text-align: center;
   font-size: 14px;
   color: var(--ui-text-secondary);
 }
-.feed-pagination-status p { margin: 0 0 12px; }
-.feed-load-sentinel { height: 1px; }
+.feed-pagination-status p {
+  margin: 0 0 12px;
+}
+.feed-load-sentinel {
+  height: 1px;
+}
 .feed-loading {
   display: grid;
   gap: 12px;
@@ -826,7 +831,8 @@ a {
   margin: 16px 0;
   text-align: center;
 }
-.feed-state h1, .feed-state h2 {
+.feed-state h1,
+.feed-state h2 {
   font-family: var(--ui-font-display);
   font-size: 24px;
   font-weight: 500;
@@ -836,7 +842,9 @@ a {
   color: var(--ui-text-secondary);
   margin: 0 0 22px;
 }
-.feed-state button { min-width: 140px; }
+.feed-state button {
+  min-width: 140px;
+}
 .feed-support-note {
   padding: 15px 18px;
   margin: 0 0 20px;

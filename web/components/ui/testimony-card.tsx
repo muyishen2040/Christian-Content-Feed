@@ -20,11 +20,18 @@ export function TestimonyCard({
 }: TestimonyCardProps) {
   const visual = storyVisual(story, number);
   return (
-    <article className="story-card story-card--image" data-testid="testimony-card">
+    <article
+      className="story-card story-card--image"
+      data-testid="testimony-card"
+    >
       <Link
         href={`/stories/${story.id}`}
         className={`story-cover ${visual.className}`}
-        style={visual.backgroundImage ? { backgroundImage: visual.backgroundImage } : undefined}
+        style={
+          visual.backgroundImage
+            ? { backgroundImage: visual.backgroundImage }
+            : undefined
+        }
         onClick={onOpen}
         aria-label={`閱讀故事：${story.title}`}
         data-testid="story-open"
@@ -42,7 +49,9 @@ export function TestimonyCard({
           )}
         </span>
         <span className="story-cover-copy">
-          <span className="story-cover-source">{story.sourceName} · 見證故事</span>
+          <span className="story-cover-source">
+            {story.sourceName} · 見證故事
+          </span>
           <span className="story-cover-title">{story.title}</span>
           <span className="story-cover-description">{story.summary}</span>
           <span className="story-cover-read">
@@ -64,7 +73,9 @@ export function TestimonyCard({
         ) : (
           <span>示意故事，無原始來源</span>
         )}
-        <span>{story.contentType === "testimony" ? "文章" : story.contentType}</span>
+        <span>
+          {story.contentType === "testimony" ? "文章" : story.contentType}
+        </span>
       </div>
       {actions ? <div className="story-feedback">{actions}</div> : null}
     </article>

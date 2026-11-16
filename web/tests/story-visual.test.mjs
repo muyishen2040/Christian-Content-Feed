@@ -19,8 +19,16 @@ test("unapproved or missing thumbnails always use a text-first fallback", () => 
   for (const story of [
     real,
     { ...real, thumbnailUrl: "https://images.example/cover.png" },
-    { ...real, thumbnailUrl: "https://images.example/cover.png", thumbnailApproved: false },
-    { ...real, thumbnailUrl: "http://images.example/cover.png", thumbnailApproved: true },
+    {
+      ...real,
+      thumbnailUrl: "https://images.example/cover.png",
+      thumbnailApproved: false,
+    },
+    {
+      ...real,
+      thumbnailUrl: "http://images.example/cover.png",
+      thumbnailApproved: true,
+    },
   ]) {
     assert.equal(storyVisual(story, 1).hasImage, false);
     assert.equal(storyVisual(story, 1).className, "story-cover--no-image");
@@ -38,5 +46,8 @@ test("approved HTTPS thumbnail is allowed and non-mock source attribution is req
   assert.equal(image.hasImage, true);
   assert.equal(image.className, "story-cover--authorized-image");
   assert.match(image.backgroundImage, /images\.example\/approved\.jpg/);
-  assert.equal(storySchema.safeParse({ ...approved, sourceUrl: null }).success, false);
+  assert.equal(
+    storySchema.safeParse({ ...approved, sourceUrl: null }).success,
+    false,
+  );
 });

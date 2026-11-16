@@ -9,7 +9,9 @@ export function generateStaticParams() {
   return mockStories.map((story) => ({ id: story.id }));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { id } = await params;
   const story = mockStories.find((item) => item.id === id);
   return {
@@ -22,7 +24,11 @@ export default async function StoryDetailPage({ params }: PageProps) {
   return (
     <div className="app-shell">
       <header className="feed-header">
-        <Link className="feed-wordmark" href="/" aria-label="見證故事，回到動態">
+        <Link
+          className="feed-wordmark"
+          href="/"
+          aria-label="見證故事，回到動態"
+        >
           <span className="wordmark-line" aria-hidden="true" />
           見證故事
         </Link>
