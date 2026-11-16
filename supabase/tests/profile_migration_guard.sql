@@ -1,6 +1,7 @@
 -- Verify that an upgrade never deletes an existing plaintext description.
 \set ON_ERROR_STOP on
 BEGIN;
+\ir ../migrations/20261116050000_encrypt_profile_descriptions.sql
 ALTER TABLE public.user_profiles ADD COLUMN description text;
 INSERT INTO auth.users (id, instance_id, aud, role, created_at, updated_at)
 VALUES ('00000000-0000-4000-8000-0000000000c3',

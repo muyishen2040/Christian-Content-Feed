@@ -143,6 +143,11 @@ DO $$
 BEGIN
  IF (SELECT count(*) FROM public.published_testimonies) <> 1
  THEN RAISE EXCEPTION 'service role view must exclude drafts'; END IF;
+ IF (SELECT description_ciphertext FROM public.user_profiles
+     WHERE user_id = '00000000-0000-4000-8000-0000000000a1') <> decode('010203', 'hex')
+ THEN RAISE EXCEPTION 'service role could not read encrypted profile data'; END IF;
+ UPDATE public.user_profiles SET description_ciphertext = decode('0a0b0c', 'hex')
+ WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
 END $$;
 RESET ROLE;
 

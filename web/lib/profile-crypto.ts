@@ -60,8 +60,8 @@ export function decryptProfileDescription(
   value: string,
 ): string {
   if (
-    !/^\\x(?:[0-9a-f]{2})+$/i.test(value) ||
-    value.length > 2 + MAX_ENVELOPE_BYTES * 2
+    value.length > 2 + MAX_ENVELOPE_BYTES * 2 ||
+    !/^\\x(?:[0-9a-f]{2})+$/i.test(value)
   ) {
     throw new Error("Invalid encrypted profile description");
   }
