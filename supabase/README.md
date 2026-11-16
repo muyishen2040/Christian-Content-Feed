@@ -15,7 +15,8 @@
 | Table | Access boundary |
 | --- | --- |
 | `sources` | service-role only; contains private crawler notes and rights evidence |
-| `testimonies` | public read only when source, review and rights all approved and status published |
+| `testimonies` | approved public metadata only; full bodies remain private |
+| `published_testimonies` | approved metadata for public and service-side feed reads |
 | `testimony_embeddings` | service-role only, versioned by model/version/dimension |
 | `user_profiles` | own authenticated anonymous user ID only |
 | `feedback` | own event records only; `(user_id,request_id)` is idempotent |
@@ -24,7 +25,13 @@
 
 Supabase Auth anonymous sessions have a **signed-in `authenticated` JWT role** with `auth.uid()`. A bare Supabase `anon` project key has no owner ID and cannot read private profiles, feedback, Saved, or events. Never expose the service-role key to frontend or previews.
 
-Testimony attribution is denormalized into `source_name` and `source_url` so clients never need to SELECT the private `sources` table. A source approval predicate (SECURITY DEFINER, fixed search path) prevents reads after source rights are revoked; a trigger refuses unapproved publications. Publish only after human source-rights and editorial review. Content is not made public by the importer.
+Feed queries should use `published_testimonies`, including when using the service role:
+its filter excludes unapproved and revoked content even when RLS is bypassed. The view
+exposes metadata only. Full bodies and internal source records stay private.
+
+Attribution uses `source_name` and `source_url`. A source approval predicate prevents
+reads after rights are revoked; a trigger refuses unapproved publications. Publish only
+after human source-rights and editorial review.
 
 The embedding column is variable-dimension `extensions.vector`, validated by
 `embedding_dim`. The selected BGE model produces 512-dimensional vectors. Choose a

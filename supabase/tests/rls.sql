@@ -44,8 +44,18 @@ VALUES
 SET LOCAL ROLE anon;
 DO $$
 BEGIN
- IF (SELECT count(*) FROM public.testimonies) <> 1
+ IF (SELECT count(*) FROM public.published_testimonies) <> 1
  THEN RAISE EXCEPTION 'anon must only read approved, published source-backed testimony'; END IF;
+ BEGIN
+   PERFORM body FROM public.testimonies;
+   RAISE EXCEPTION 'anon unexpectedly read testimony body';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+   PERFORM content_hash FROM public.testimonies;
+   RAISE EXCEPTION 'anon unexpectedly read internal content hash';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
  BEGIN
    PERFORM private_import_notes FROM public.sources;
    RAISE EXCEPTION 'anon unexpectedly read private source metadata';
@@ -59,8 +69,13 @@ SELECT set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1
 DO $$
 DECLARE n integer;
 BEGIN
- IF (SELECT count(*) FROM public.testimonies) <> 1
+ IF (SELECT count(*) FROM public.published_testimonies) <> 1
  THEN RAISE EXCEPTION 'authenticated user saw unapproved content'; END IF;
+ BEGIN
+   PERFORM body FROM public.testimonies;
+   RAISE EXCEPTION 'authenticated user unexpectedly read testimony body';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
  IF (SELECT count(*) FROM public.user_profiles) <> 1
  THEN RAISE EXCEPTION 'user A read another user profile'; END IF;
  IF (SELECT count(*) FROM public.feedback) <> 1
@@ -93,6 +108,31 @@ BEGIN
  IF (SELECT count(*) FROM public.user_profiles) <> 1 OR
     (SELECT count(*) FROM public.feedback) <> 1
  THEN RAISE EXCEPTION 'user B read wrong rows'; END IF;
+END $$;
+RESET ROLE;
+
+SET LOCAL ROLE service_role;
+DO $$
+BEGIN
+ IF (SELECT count(*) FROM public.published_testimonies) <> 1
+ THEN RAISE EXCEPTION 'service role view must exclude drafts'; END IF;
+END $$;
+RESET ROLE;
+
+UPDATE public.sources SET rights_status = 'revoked'
+WHERE id = '00000000-0000-4000-8000-000000000001';
+SET LOCAL ROLE anon;
+DO $$
+BEGIN
+ IF (SELECT count(*) FROM public.published_testimonies) <> 0
+ THEN RAISE EXCEPTION 'revoked source must not remain public'; END IF;
+END $$;
+RESET ROLE;
+SET LOCAL ROLE service_role;
+DO $$
+BEGIN
+ IF (SELECT count(*) FROM public.published_testimonies) <> 0
+ THEN RAISE EXCEPTION 'service role view must exclude revoked sources'; END IF;
 END $$;
 RESET ROLE;
 ROLLBACK;
