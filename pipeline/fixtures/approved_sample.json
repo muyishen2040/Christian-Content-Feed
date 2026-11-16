@@ -169,10 +169,9 @@
       "rights_status": "link_out",
       "rights_evidence": "robots.txt: 'Allow: /web/'; its Disallow rules (e.g. /gospel/) apply to root-level paths and do not match /web/gospel/. No reuse terms found on the page.",
       "flags": [
-        "Rights weaker than church-run sources: the site publishes testimonies submitted by individuals ('刊登其他見證'), so the copyright holder is the author.",
+        "The hosting site accepts individually submitted stories. Verify the copyright holder and whether title/summary reuse is permitted; do not assume the site can license all submissions.",
         "Last modified 2026-06-02.",
-        "The page shows the author's pseudonym; do not store it.",
-        "An earlier candidate from this site (ID 8528) was rejected: the author describes several suicide attempts."
+        "The page shows the author's pseudonym; do not store it."
       ],
       "review": {
         "reviewer": null,
