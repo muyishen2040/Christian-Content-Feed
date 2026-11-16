@@ -27,12 +27,12 @@ function FeedContent() {
   // and browsers that remount the route on navigation.
   useLayoutEffect(() => {
     if (pathname !== "/" || !feed.hasLoaded) return;
-    const stored = window.sessionStorage.getItem("testimony-feed:scroll-position");
+    const stored = window.sessionStorage.getItem(
+      "testimony-feed:scroll-position",
+    );
     const numeric = stored === null ? NaN : Number(stored);
     const target =
-      Number.isFinite(numeric) && numeric > 0
-        ? numeric
-        : feed.readPosition();
+      Number.isFinite(numeric) && numeric > 0 ? numeric : feed.readPosition();
     if (!Number.isFinite(target) || target <= 0) return;
 
     restoring.current = true;
@@ -147,7 +147,10 @@ function FeedContent() {
                 onOpen={() => {
                   const top = Math.max(0, window.scrollY);
                   feed.rememberPosition(top);
-                  window.sessionStorage.setItem("testimony-feed:scroll-position", String(top));
+                  window.sessionStorage.setItem(
+                    "testimony-feed:scroll-position",
+                    String(top),
+                  );
                   feed.recordEvent(entry, "open");
                 }}
                 onExternalOpen={() => feed.recordEvent(entry, "click")}

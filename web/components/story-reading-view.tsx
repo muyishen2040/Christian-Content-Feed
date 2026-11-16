@@ -24,7 +24,11 @@ export function StoryReadingView({ storyId }: { storyId: string }) {
         <div className="feed-state" role="status">
           <h1>無法載入這則故事</h1>
           <p>目前沒有這則故事的完整資料。請回到動態重新開啟。</p>
-          <Link className="ui-button ui-button--primary" href="/" scroll={false}>
+          <Link
+            className="ui-button ui-button--primary"
+            href="/"
+            scroll={false}
+          >
             返回故事動態
           </Link>
         </div>
@@ -103,7 +107,11 @@ export function StoryReadingView({ storyId }: { storyId: string }) {
           <p className="article-source">目前沒有真實來源連結</p>
         )}
       </article>
-      <Link href="/" scroll={false} className="article-back article-back--bottom">
+      <Link
+        href="/"
+        scroll={false}
+        className="article-back article-back--bottom"
+      >
         ← 繼續探索故事
       </Link>
     </main>
