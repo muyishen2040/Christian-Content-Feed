@@ -1,12 +1,12 @@
 {
   "_meta": {
-    "purpose": "Link-out sample for MUY-15/MUY-18: one testimony from each of 10 distinct sources. Real source pages, not fictional.",
+    "purpose": "Candidate link-out sample: one first-person testimony candidate from each of 10 distinct sources; not cleared for publication.",
     "checked_on": "2026-11-15",
     "storage_rule": "Store only title, source name, original URL, our own summary and tags. No body text and no author names.",
-    "review_status": "approved_by_project_owner_pending_samuel_and_muy43_rights_confirmation",
-    "criteria": "First-person story about God's work in the writer's life; text page; link-out rights; no crisis-adjacent content in the chosen testimony; no 真耶穌教會 or 全能神 sources; our own summary.",
-    "open_rights_item": "Samuel / MUY-43 to confirm that generating our own summary satisfies the PRD rights wording. No legal review done.",
-    "how_to_review": "See pipeline/fixtures/REVIEW.md. Fill review.reviewer, review.decision (approve|reject), review.reason and review.reviewed_on per record, then set _meta.review_status."
+    "review_status": "pending_independent_content_and_rights_review",
+    "criteria": "Candidate should link directly to a first-person Christian testimony in Traditional Chinese, with a short original synopsis, suitable content, a traceable publisher, and unresolved reuse rights explicitly flagged.",
+    "open_rights_item": "Before publication, independently determine whether each source permits the intended summary, title, linking, and image use. In particular review CC BY-NC-ND terms and ownership of user-submitted stories. A public URL or robots.txt rule is not permission.",
+    "how_to_review": "Follow pipeline/fixtures/REVIEW.md and record a dated, substantiated source/content and rights decision in each record's review fields before publishing."
   },
   "records": [
     {
@@ -26,10 +26,10 @@
       "rights_evidence": "robots.txt allows /articles; footer 'All rights reserved'; About page says content is for believers to read and share freely; no licence.",
       "flags": [],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -49,10 +49,10 @@
       "rights_evidence": "robots.txt: empty Disallow; footer '© 2025 TAIPEI DONGHU CHRUCH', no reuse terms.",
       "flags": [],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -72,10 +72,10 @@
       "rights_evidence": "No robots.txt (404); footer '© 基督教生命之道靈糧堂 | All rights reserved'.",
       "flags": [],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -94,13 +94,13 @@
       "rights_status": "link_out",
       "rights_evidence": "robots.txt blocks only /search and /share-widget. Footer: CC BY-NC-ND 3.0 Taiwan, and 'copyright belongs to 台北真理堂; reprint needs consent'.",
       "flags": [
-        "ND licence: our generated summary may count as an adaptation; NC: app must be non-commercial. For MUY-43 / Samuel."
+        "ND licence: our generated summary may count as an adaptation; NC: app must be non-commercial. Requires documented rights approval before public use."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words. Owner accepts that our summary is acceptable despite CC BY-NC-ND; Samuel / MUY-43 can still overrule.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -122,10 +122,10 @@
         "Source page uses stock images ('圖 網路示意'): do not use thumbnails."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -147,10 +147,10 @@
         "Source page title includes the author's name; do not store it."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -175,10 +175,10 @@
         "An earlier candidate from this site (ID 8528) was rejected: the author describes several suicide attempts."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words. Owner keeps this record despite the weaker rights position (individually submitted, no stated terms); Samuel / MUY-43 can still overrule.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -200,10 +200,10 @@
         "Seminary student calling testimony; the story mentions a family member's illness, so keep the summary generic."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -225,10 +225,10 @@
         "Church is in the US (San Jose)."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     },
     {
@@ -251,10 +251,10 @@
         "Post is from 2017."
       ],
       "review": {
-        "reviewer": "project-owner",
-        "decision": "approve",
-        "reason": "Reviewed in chat on 2026-11-16: link, first-person story, no crisis content, summary in our own words.",
-        "reviewed_on": "2026-11-16"
+        "reviewer": null,
+        "decision": null,
+        "reason": "Pending independent, documented editorial and source-rights review; this candidate is not cleared for publication.",
+        "reviewed_on": null
       }
     }
   ]
