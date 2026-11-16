@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check app data lib tests components",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "test:embedding-client": "node --experimental-strip-types --conditions=react-server --test scripts/embedding-client.test.mjs"
+    "test:embedding-client": "node --experimental-strip-types --conditions=react-server --test scripts/embedding-client.test.mjs",
+    "test:profile-crypto": "node --experimental-strip-types --conditions=react-server --test scripts/profile-crypto.test.mjs"
   },
   "dependencies": {
     "@vercel/oidc": "4.0.9",
