@@ -98,6 +98,7 @@ type MockOptions = { detectSupport?: (description: string) => boolean };
 // Test adapter only. It never writes personal text to a database or localStorage.
 export class MockApiClient implements ApiClient {
   private profile: ProfileInput | null = null;
+  private activeVariant: PageVariant = "baseline";
   private readonly feedback = new Map<string, FeedbackState>();
   private readonly replies = new Map<
     string,
@@ -134,6 +135,7 @@ export class MockApiClient implements ApiClient {
       // Drop the submitted description and previous preferences for this mock
       // session; a flagged input must never influence recommendations.
       this.profile = null;
+      this.activeVariant = "baseline";
       return { profile: null, safetyState: "support", feedMode: "support" };
     }
     // Age/gender are optional UI fields, not retained or used for scoring.
@@ -144,6 +146,11 @@ export class MockApiClient implements ApiClient {
       consentKeepText: parsed.consentKeepText,
     };
     this.profile = parsed.consentStorePreferences ? sanitized : null;
+    // A one-visit choice can influence the current session without being
+    // retained as an account preference. This adapter never ranks by text.
+    this.activeVariant = parsed.description || parsed.topics.length
+      ? "personalized"
+      : "baseline";
     return {
       profile: sanitized,
       safetyState: "normal",
@@ -153,7 +160,7 @@ export class MockApiClient implements ApiClient {
   }
 
   async getFeed(query: FeedQuery = {}): Promise<FeedResponse> {
-    const variant: PageVariant = this.profile ? "personalized" : "baseline";
+    const variant: PageVariant = this.activeVariant;
     const available = mockStories.filter(
       (story) => this.feedback.get(story.id)?.reaction !== "not_for_me",
     );
@@ -273,6 +280,7 @@ export class MockApiClient implements ApiClient {
 
   async reset(): Promise<MutationResponse> {
     this.profile = null;
+    this.activeVariant = "baseline";
     this.feedback.clear();
     this.replies.clear();
     this.undoable.clear();
