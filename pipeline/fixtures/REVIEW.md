@@ -32,3 +32,6 @@ Then fill the record's `review` block (`reviewer`, `decision`, `reason`, `review
 3. 台灣聖經網 testimonies are submitted by individuals, so the author holds the copyright and no reuse terms are stated. Keep or drop? (MUY-43)
 
 No legal review has been done.
+
+## Review log
+- 2026-11-16, `project-owner`: approved all 10 records in chat. Accepted the generated summary for the CC BY-NC-ND record and kept the 台灣聖經網 record. These rights calls are the owner's; Samuel and MUY-43 can still overrule. No legal review has been done.
