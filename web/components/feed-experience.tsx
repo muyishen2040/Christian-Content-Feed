@@ -36,10 +36,7 @@ function FeedContent() {
   useEffect(() => {
     const remember = () => feed.rememberPosition(window.scrollY);
     window.addEventListener("scroll", remember, { passive: true });
-    return () => {
-      remember();
-      window.removeEventListener("scroll", remember);
-    };
+    return () => window.removeEventListener("scroll", remember);
   }, [feed.rememberPosition]);
 
   useEffect(() => {
