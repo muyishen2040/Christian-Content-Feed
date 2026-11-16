@@ -18,7 +18,7 @@ export function StoryReadingView({ storyId }: { storyId: string }) {
   if (!story) {
     return (
       <main className="article-layout">
-        <Link href="/" className="article-back">
+        <Link href="/" scroll={false} className="article-back">
           ← 返回故事
         </Link>
         <div className="feed-state" role="status">
@@ -42,7 +42,7 @@ export function StoryReadingView({ storyId }: { storyId: string }) {
 
   return (
     <main className="article-layout">
-      <Link href="/" className="article-back">
+      <Link href="/" scroll={false} className="article-back">
         ← 返回故事
       </Link>
       <div

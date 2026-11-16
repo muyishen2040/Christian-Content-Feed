@@ -27,6 +27,7 @@ export default async function StoryDetailPage({ params }: PageProps) {
         <Link
           className="feed-wordmark"
           href="/"
+          scroll={false}
           aria-label="見證故事，回到動態"
         >
           <span className="wordmark-line" aria-hidden="true" />
