@@ -2,6 +2,15 @@
 -- psql -X -v ON_ERROR_STOP=1 "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/tests/rls.sql
 BEGIN;
 
+DO $$
+BEGIN
+ IF EXISTS (
+   SELECT 1 FROM information_schema.columns
+   WHERE table_schema = 'public' AND table_name = 'user_profiles'
+     AND column_name = 'description'
+ ) THEN RAISE EXCEPTION 'plaintext profile column must not exist'; END IF;
+END $$;
+
 -- Synthetic, disposable auth users. No actual private descriptions or credentials.
 INSERT INTO auth.users (id, instance_id, aud, role, created_at, updated_at)
 VALUES
@@ -24,10 +33,10 @@ VALUES
   'fixture-pending-12', 'Synthetic pending testimony', 'Do not expose',
   'Approved fictitious source', 'pending', 'pending', 'draft');
 
-INSERT INTO public.user_profiles (user_id, description)
+INSERT INTO public.user_profiles (user_id, topics, description_ciphertext)
 VALUES
- ('00000000-0000-4000-8000-0000000000a1', 'synthetic A'),
- ('00000000-0000-4000-8000-0000000000b2', 'synthetic B');
+ ('00000000-0000-4000-8000-0000000000a1', ARRAY['fixture A'], decode('010203', 'hex')),
+ ('00000000-0000-4000-8000-0000000000b2', ARRAY['fixture B'], decode('040506', 'hex'));
 INSERT INTO public.feedback (user_id, testimony_id, action, request_id)
 VALUES
  ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000011','save','00000000-0000-4000-8000-000000000091'),
@@ -85,10 +94,28 @@ BEGIN
  IF (SELECT count(*) FROM public.feed_events) <> 1
  THEN RAISE EXCEPTION 'user A read another user feed events'; END IF;
 
- UPDATE public.user_profiles SET description = 'should not change'
+ DELETE FROM public.user_profiles
  WHERE user_id = '00000000-0000-4000-8000-0000000000b2';
  GET DIAGNOSTICS n = ROW_COUNT;
- IF n <> 0 THEN RAISE EXCEPTION 'user A modified user B'; END IF;
+ IF n <> 0 THEN RAISE EXCEPTION 'user A deleted user B'; END IF;
+
+ BEGIN
+   PERFORM description_ciphertext FROM public.user_profiles;
+   RAISE EXCEPTION 'client unexpectedly read encrypted profile text';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+   UPDATE public.user_profiles SET topics = ARRAY['should not change']
+   WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
+   RAISE EXCEPTION 'client unexpectedly wrote directly to profiles';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+   INSERT INTO public.user_profiles (user_id)
+   VALUES ('00000000-0000-4000-8000-0000000000a1');
+   RAISE EXCEPTION 'client unexpectedly inserted directly into profiles';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
 
  BEGIN
    INSERT INTO public.feedback (user_id, testimony_id, action, request_id)
