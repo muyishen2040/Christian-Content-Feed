@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "format:check": "prettier --check app data lib tests",
+    "format:check": "prettier --check app data lib tests components",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "test:embedding-client": "node --experimental-strip-types --conditions=react-server --test scripts/embedding-client.test.mjs"
   },

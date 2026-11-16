@@ -1,0 +1,51 @@
+name: Mobile design screenshots and smoke
+
+on:
+  pull_request:
+    paths:
+      - "web/app/**"
+      - "web/components/**"
+      - "web/scripts/check-design-layout.mjs"
+      - ".github/workflows/design-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  design-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Install isolated Playwright smoke dependency
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start local Next.js preview
+        run: |
+          npm run start > /tmp/christian-feed-preview.log 2>&1 &
+          echo $! > /tmp/christian-feed-preview.pid
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/christian-feed-preview.log
+          exit 1
+      - name: Check 320/375/768/1280px layouts and capture screenshots
+        run: node scripts/check-design-layout.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: testimony-feed-responsive-screenshots
+          path: web/artifacts/design-preview/*.png
+          retention-days: 14

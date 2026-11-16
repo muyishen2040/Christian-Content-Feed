@@ -1,27 +1,32 @@
-import { testimonies } from "@/data/testimonies";
+import Link from "next/link";
+import { PreviewExperience } from "@/components/preview-experience";
+import { mockStories } from "@/lib/mock-data";
 
-export default function Home() {
+export default function FeedPage() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <p className="text-sm font-medium text-stone-500">開發預覽 · 範例內容</p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        故事，陪你走一段路
-      </h1>
-      <p className="mt-4 leading-7 text-stone-600">
-        這是開發用的示意頁面。以下故事均為虛構，尚未連結真實內容。
-      </p>
-      <section aria-label="示範故事" className="mt-10 space-y-4">
-        {testimonies.map((story) => (
-          <article
-            key={story.id}
-            className="rounded-xl border border-stone-200 bg-white p-6"
-          >
-            <p className="text-sm text-stone-500">{story.source}</p>
-            <h2 className="mt-2 text-xl font-semibold">{story.title}</h2>
-            <p className="mt-3 leading-7 text-stone-600">{story.preview}</p>
-          </article>
-        ))}
-      </section>
-    </main>
+    <div className="app-shell">
+      <header className="feed-header">
+        <Link
+          className="feed-wordmark"
+          href="/"
+          aria-label="見證故事，探索動態"
+        >
+          <span className="wordmark-line" aria-hidden="true" />
+          見證故事
+        </Link>
+        <span className="feed-header-status">故事探索 · 示意版</span>
+      </header>
+      <main id="feed" className="feed-layout">
+        <div className="feed-intro">
+          <p className="feed-kicker">在生活裡，遇見不一樣的光</p>
+          <h1 className="feed-heading">為你挑選的故事</h1>
+          <p className="feed-subtitle">滑動看看，哪個故事陪你走一段路</p>
+        </div>
+        <PreviewExperience stories={mockStories.slice(0, 4)} />
+        <p className="feed-disclaimer" role="note">
+          開發預覽：所有故事與圖片均為示意，不代表真實見證或來源。互動不會儲存。
+        </p>
+      </main>
+    </div>
   );
 }
