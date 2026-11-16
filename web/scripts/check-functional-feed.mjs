@@ -51,12 +51,19 @@ try {
   const page = await newPage();
   const events = [];
   const cursors = [];
+  // Hold the first mocked response until the loading state has actually been
+  // observed. An immediately fulfilled mock can skip the transient skeleton.
+  let releaseInitialResponse;
+  const initialResponseGate = new Promise((resolve) => {
+    releaseInitialResponse = resolve;
+  });
   await page.route(feedPath, async (route) => {
     const cursor = new URL(route.request().url()).searchParams.get("cursor");
     cursors.push(cursor);
     const response = cursor
       ? payload([3, 4, 5], null, 502) // overlap tests client deduplication
       : payload([0, 1, 2, 3], "next-page", 501);
+    if (!cursor) await initialResponseGate;
     await route.fulfill({ status: 200, json: response });
   });
   await page.route(eventPath, async (route) => {
@@ -70,6 +77,7 @@ try {
 
   await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
   await page.getByTestId("feed-loading").waitFor();
+  releaseInitialResponse();
   await page.locator('[data-testid="testimony-card"]').nth(3).waitFor();
   assert.equal(await page.locator('[data-testid="testimony-card"]').count(), 4);
   assert.equal(await page.locator(".story-cover--authorized-image").count(), 1);
