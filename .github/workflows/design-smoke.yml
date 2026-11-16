@@ -20,8 +20,8 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -43,7 +43,7 @@ jobs:
           exit 1
       - name: Check 320/375/768/1280px layouts and capture screenshots
         run: node scripts/check-design-layout.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: testimony-feed-responsive-screenshots

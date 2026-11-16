@@ -11,28 +11,29 @@ import type { FeedEntry } from "@/lib/feed-pagination";
 function FeedContent() {
   const feed = useFeedSession();
   const pathname = usePathname();
+  const { recordEvent, loadMore, status, hasLoaded, readPosition, rememberPosition, nextCursor } = feed;
   const restoring = useRef(false);
   const loadTrigger = useRef<HTMLDivElement>(null);
   const onImpression = useCallback(
-    (entry: FeedEntry) => feed.recordEvent(entry, "impression"),
-    [feed.recordEvent],
+    (entry: FeedEntry) => recordEvent(entry, "impression"),
+    [recordEvent],
   );
 
   useEffect(() => {
-    if (feed.status === "idle") void feed.loadMore();
-  }, [feed.status, feed.loadMore]);
+    if (status === "idle") void loadMore();
+  }, [status, loadMore]);
 
   // Remember only a numeric viewport offset for a feed -> detail -> feed trip.
   // The provider retains loaded pages while sessionStorage handles page caching
   // and browsers that remount the route on navigation.
   useLayoutEffect(() => {
-    if (pathname !== "/" || !feed.hasLoaded) return;
+    if (pathname !== "/" || !hasLoaded) return;
     const stored = window.sessionStorage.getItem(
       "testimony-feed:scroll-position",
     );
     const numeric = stored === null ? NaN : Number(stored);
     const target =
-      Number.isFinite(numeric) && numeric > 0 ? numeric : feed.readPosition();
+      Number.isFinite(numeric) && numeric > 0 ? numeric : readPosition();
     if (!Number.isFinite(target) || target <= 0) return;
 
     restoring.current = true;
@@ -51,31 +52,31 @@ function FeedContent() {
       window.clearTimeout(finish);
       restoring.current = false;
     };
-  }, [pathname, feed.hasLoaded, feed.readPosition]);
+  }, [pathname, hasLoaded, readPosition]);
 
   useEffect(() => {
     const remember = () => {
-      if (!restoring.current) feed.rememberPosition(window.scrollY);
+      if (!restoring.current) rememberPosition(window.scrollY);
     };
     window.addEventListener("scroll", remember, { passive: true });
     return () => window.removeEventListener("scroll", remember);
-  }, [feed.rememberPosition]);
+  }, [rememberPosition]);
 
   useEffect(() => {
     const trigger = loadTrigger.current;
-    if (!trigger || !feed.nextCursor || feed.status !== "ready") return;
+    if (!trigger || !nextCursor || status !== "ready") return;
     if (typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting && document.visibilityState === "visible") {
-          void feed.loadMore();
+          void loadMore();
         }
       },
       { rootMargin: "160px" },
     );
     observer.observe(trigger);
     return () => observer.disconnect();
-  }, [feed.loadMore, feed.nextCursor, feed.status]);
+  }, [loadMore, nextCursor, status]);
 
   if (
     !feed.hasLoaded &&
