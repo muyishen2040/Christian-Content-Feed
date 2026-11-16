@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useFeedSession } from "./feed-session-provider";
 import { StoryVisibility } from "./story-visibility";
 import { TestimonyCard } from "./ui/testimony-card";
@@ -9,7 +10,8 @@ import type { FeedEntry } from "@/lib/feed-pagination";
 
 function FeedContent() {
   const feed = useFeedSession();
-  const restored = useRef(false);
+  const pathname = usePathname();
+  const restoring = useRef(false);
   const loadTrigger = useRef<HTMLDivElement>(null);
   const onImpression = useCallback(
     (entry: FeedEntry) => feed.recordEvent(entry, "impression"),
@@ -20,16 +22,41 @@ function FeedContent() {
     if (feed.status === "idle") void feed.loadMore();
   }, [feed.status, feed.loadMore]);
 
-  // Keep pagination and card state in the layout-level provider when navigating
-  // into an article. Restore the viewport after those same cards have rendered.
+  // Remember only a numeric viewport offset for a feed -> detail -> feed trip.
+  // The provider retains loaded pages while sessionStorage handles page caching
+  // and browsers that remount the route on navigation.
   useLayoutEffect(() => {
-    if (restored.current || !feed.hasLoaded) return;
-    restored.current = true;
-    window.scrollTo(0, feed.readPosition());
-  }, [feed.hasLoaded, feed.readPosition]);
+    if (pathname !== "/" || !feed.hasLoaded) return;
+    const stored = window.sessionStorage.getItem("testimony-feed:scroll-position");
+    const numeric = stored === null ? NaN : Number(stored);
+    const target =
+      Number.isFinite(numeric) && numeric > 0
+        ? numeric
+        : feed.readPosition();
+    if (!Number.isFinite(target) || target <= 0) return;
+
+    restoring.current = true;
+    const restore = () => window.scrollTo({ top: target, behavior: "instant" });
+    restore();
+    const frame = window.requestAnimationFrame(restore);
+    const retry = window.setTimeout(restore, 80);
+    const finish = window.setTimeout(() => {
+      restore();
+      window.sessionStorage.removeItem("testimony-feed:scroll-position");
+      restoring.current = false;
+    }, 180);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
+      window.clearTimeout(finish);
+      restoring.current = false;
+    };
+  }, [pathname, feed.hasLoaded, feed.readPosition]);
 
   useEffect(() => {
-    const remember = () => feed.rememberPosition(window.scrollY);
+    const remember = () => {
+      if (!restoring.current) feed.rememberPosition(window.scrollY);
+    };
     window.addEventListener("scroll", remember, { passive: true });
     return () => window.removeEventListener("scroll", remember);
   }, [feed.rememberPosition]);
@@ -118,7 +145,9 @@ function FeedContent() {
                 story={story}
                 number={story.rank || index + 1}
                 onOpen={() => {
-                  feed.rememberPosition(window.scrollY);
+                  const top = Math.max(0, window.scrollY);
+                  feed.rememberPosition(top);
+                  window.sessionStorage.setItem("testimony-feed:scroll-position", String(top));
                   feed.recordEvent(entry, "open");
                 }}
                 onExternalOpen={() => feed.recordEvent(entry, "click")}
