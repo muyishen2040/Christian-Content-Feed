@@ -38,11 +38,19 @@ export function dismissWelcome() {
 }
 
 export function WelcomePrompt() {
-  const visible = useSyncExternalStore(subscribe, isWelcomeVisible, () => false);
+  const visible = useSyncExternalStore(
+    subscribe,
+    isWelcomeVisible,
+    () => false,
+  );
   if (!visible) return null;
 
   return (
-    <aside className="welcome-prompt" data-testid="welcome-prompt" aria-label="歡迎探索見證故事">
+    <aside
+      className="welcome-prompt"
+      data-testid="welcome-prompt"
+      aria-label="歡迎探索見證故事"
+    >
       <p className="welcome-prompt-kicker">一段故事，一點同行</p>
       <h2>找到與你此刻心情相近的見證</h2>
       <p>

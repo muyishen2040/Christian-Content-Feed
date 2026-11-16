@@ -10,7 +10,11 @@ export default function SupportPage() {
   return (
     <div className="app-shell">
       <header className="feed-header">
-        <Link className="feed-wordmark" href="/" aria-label="見證故事，回到動態">
+        <Link
+          className="feed-wordmark"
+          href="/"
+          aria-label="見證故事，回到動態"
+        >
           <span className="wordmark-line" aria-hidden="true" />
           見證故事
         </Link>
@@ -23,9 +27,7 @@ export default function SupportPage() {
           如果你正面臨很難受的情況，可以先找一位信任的人談談，
           或聯繫所在地的心理健康與危機支援服務。
         </p>
-        <p>
-          若你或其他人正處於立即危險中，請立即聯繫當地的緊急服務。
-        </p>
+        <p>若你或其他人正處於立即危險中，請立即聯繫當地的緊急服務。</p>
         <div className="support-action-row">
           <Link href="/" className="ui-button ui-button--primary">
             先看看故事

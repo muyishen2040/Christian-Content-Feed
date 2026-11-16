@@ -148,9 +148,8 @@ export class MockApiClient implements ApiClient {
     this.profile = parsed.consentStorePreferences ? sanitized : null;
     // A one-visit choice can influence the current session without being
     // retained as an account preference. This adapter never ranks by text.
-    this.activeVariant = parsed.description || parsed.topics.length
-      ? "personalized"
-      : "baseline";
+    this.activeVariant =
+      parsed.description || parsed.topics.length ? "personalized" : "baseline";
     return {
       profile: sanitized,
       safetyState: "normal",

@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import {
-  profileInputSchema,
-  type ProfileInput,
-} from "@/lib/contracts";
+import { profileInputSchema, type ProfileInput } from "@/lib/contracts";
 import { useFeedSession } from "./feed-session-provider";
 import { dismissWelcome } from "./welcome-prompt";
 
@@ -53,7 +50,10 @@ export function OnboardingForm() {
       // storage after submission, including when support is recommended.
       setDescription("");
       dismissWelcome();
-      if (response.feedMode === "support" || response.safetyState === "support") {
+      if (
+        response.feedMode === "support" ||
+        response.safetyState === "support"
+      ) {
         router.replace("/support");
       } else {
         router.replace("/");
@@ -67,7 +67,11 @@ export function OnboardingForm() {
   }
 
   return (
-    <form className="onboarding-form" onSubmit={(event) => void submit(event)} noValidate>
+    <form
+      className="onboarding-form"
+      onSubmit={(event) => void submit(event)}
+      noValidate
+    >
       <div className="onboarding-form-intro">
         <p className="onboarding-kicker">01 / 你的故事，從這裡開始</p>
         <h1>最近，有什麼放在心上？</h1>
@@ -171,7 +175,11 @@ export function OnboardingForm() {
       </section>
 
       {error ? (
-        <div className="onboarding-error" role="alert" data-testid="onboarding-error">
+        <div
+          className="onboarding-error"
+          role="alert"
+          data-testid="onboarding-error"
+        >
           {error}
         </div>
       ) : null}

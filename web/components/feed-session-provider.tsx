@@ -85,7 +85,8 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
     if (
       fetching.current === requestGeneration ||
       (state.hasLoaded && !state.nextCursor)
-    ) return;
+    )
+      return;
     fetching.current = requestGeneration;
     const cursor = state.hasLoaded
       ? (state.nextCursor ?? undefined)
