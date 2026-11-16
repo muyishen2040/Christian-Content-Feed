@@ -1,101 +1,120 @@
-# MUY-35 · Mobile design direction
+# Feed-first visual design and implementation guide
 
-## Five-line direction
+## Product and scope
 
-- **Product:** A Traditional Chinese mobile reading experience for discovering source-attributed Christian testimonies related to life's difficulties and hopes.
-- **Character:** Quiet, thoughtful, human.
-- **World:** A personal reading journal — paper, ink, generous margins, and small chapter marks.
-- **Moment:** The story title and original editorial summary appear on an atmospheric image card; no homepage or promotional hero blocks the feed.
-- **Signature:** A restrained moss editorial rule beside the wordmark, plus simple chapter numbers inside the cover.
+Christian Content Feed is a Traditional Chinese reading and discovery interface for Christian personal testimonies. Visitors should be able to browse story previews, open an individual story, and eventually follow an attributed link to the original publisher. The interface emphasizes calm, readable content rather than video autoplay or a marketing landing page.
 
-## Tokens, behavior and usage
+This document describes the **frontend design system and its current demonstration**. It is not a claim that the site has a working personalized recommendation backend, published testimony catalog, persistent Saved collection, or production rights clearance.
 
-| Role | Token | Value |
+### Design direction
+
+- **Product:** A mobile-first discovery feed for source-attributed, Traditional Chinese testimonies.
+- **Character:** Quiet, warm, thoughtful, and human.
+- **Visual metaphor:** Reading journal — paper, dark ink, generous space, and small chapter markers.
+- **Primary focus:** A compelling story title and short editorial summary over an illustrative image.
+- **Recognizable detail:** A restrained moss-green line at the wordmark, repeated through functional accents.
+
+The application opens directly to the feed at `/`. An image card links to `/stories/[id]`, a readable article-detail demonstration with a return link. There is deliberately no separate promotional homepage.
+
+## What is implemented
+
+| Location | Responsibility |
+| --- | --- |
+| `web/app/page.tsx` | Feed entry point, header, introductory copy, four fictional examples, and a disclosure |
+| `web/app/stories/[id]/page.tsx` | Individual story preview with simulated article content, attribution state, and return navigation |
+| `web/components/ui/testimony-card.tsx` | Image-led story preview with accessible detail-page navigation |
+| `web/components/ui/feedback-actions.tsx` | Accessible Interested / Not for me / Saved toggle controls |
+| `web/components/preview-experience.tsx` | In-memory feedback state for visual demonstrations only |
+| `web/components/ui/button.tsx`, `field.tsx`, `typography.tsx` | Shared buttons, labels, inputs, and type hierarchy |
+| `web/data/mock-articles.ts`, `web/lib/mock-data.ts` | Entirely fictional testing and preview content |
+| `web/app/globals.css` | Visual tokens, responsive layout, image backgrounds, and interaction states |
+
+The current feedback buttons only change React component state. They do not save data across refreshes or affect ranking. The detail route renders original fictional fixture paragraphs, not a copied article. There is no source URL for the fictional examples.
+
+## Design tokens
+
+The CSS custom properties in `web/app/globals.css` are the source of truth. Tailwind v4 aliases are declared through `@theme inline`.
+
+| Role | CSS token | Value / use |
 | --- | --- | --- |
-| Page paper | `--ui-bg` | `#f7f5f0` |
-| Raised paper | `--ui-surface` | `#fffdf9` |
-| Ink | `--ui-text` | `#242923` |
-| Secondary text | `--ui-text-secondary` | `#515a51` |
+| Page background | `--ui-bg` | `#f7f5f0`, warm paper |
+| Card / surface | `--ui-surface` | `#fffdf9` |
+| Primary ink | `--ui-text` | `#242923` |
+| Secondary ink | `--ui-text-secondary` | `#515a51` |
 | Hairline | `--ui-border` | `#d9ded3` |
-| Moss action | `--ui-accent` | `#3b5d49` |
-| Focus | `--ui-focus` | `#3b5d49`, 3px outline |
-| Body | `--ui-font-body` | Local system / Noto Sans TC fallbacks |
-| Display | `--ui-font-display` | Chiron Sung HK / Noto Serif TC fallbacks |
-| Spacing | 4px rhythm | 8 / 12 / 16 / 20 / 24 / 32 / 48 / 72 |
-| Button | `--ui-radius-button` | 10px, 48px minimum height |
-| Card | `--ui-radius-card` | 16px, 20–24px padding |
-| Feedback | `.feedback-action` | 44px minimum height, `aria-pressed` |
-| Motion | `--ui-motion` | 160ms neutral transitions |
+| Action accent | `--ui-accent` | `#3b5d49`, muted moss |
+| Keyboard focus | `--ui-focus` | `#3b5d49`, 3px outline |
+| Body font | `--ui-font-body` | Noto Sans TC, system Chinese sans-serif fallbacks |
+| Display font | `--ui-font-display` | Chiron Sung HK, serif fallbacks |
+| Button radius | `--ui-radius-button` | 10px |
+| Card radius | `--ui-radius-card` | 16px |
+| Motion | `--ui-motion` | 160ms; reduced-motion preference overrides it |
 
-Tailwind 4 maps the design variables into the theme (`bg-paper`, `text-ink`, `text-moss`, `font-display`). All pages should reuse these rather than introducing one-off colors.
+Use shared tokens and components rather than adding arbitrary page-specific colors, font families, or interaction patterns.
 
-Typography: 36–62px responsive display headline, 26–36px section titles, ~23px story titles, 15–17px body text, 12–13px factual metadata only. Keep long Traditional Chinese prose legible at 1.7–1.9 line height. Do not use narrow columns for full stories or justify every line.
+### Traditional Chinese font selection
 
-The *story content* carries the hierarchy. For the demonstration feed each card uses atmospheric stock photography as a clearly marked **illustrative background**, with a high-contrast scrim and the story title/summary overlaid. This photography does not depict the subject or events of a real testimony. Before any production feed, use only approved publisher thumbnails or correctly licensed generic artwork, and retain stable text-only fallback cards. No forced autoplay, stock-photo testimony portraits posing as real people, or invented publisher identity. `sourceUrl=null` is allowed for clearly fictional mock records only; real stories must have a verifiable original URL.
+| Typeface | Character | Intended use |
+| --- | --- | --- |
+| **Chiron Sung HK (昭源宋體)** | Editorial Traditional Chinese serif | Card titles, article headings, and article paragraphs |
+| **Noto Sans TC** | Clear, neutral Traditional Chinese sans | Navigation, buttons, notices, and metadata |
+| LXGW WenKai TC (霞鶩文楷) | Informal, handwritten Kai | Consider only for occasional display accents |
+| Iansui (芫荽) | Expressive handwriting style | Consider only for limited decorative accents |
 
-Mobile-first: page gutters 16px on <=420px phones, 20px otherwise; one-column vertical feed at all sizes (max 620px) to emphasize reading rather than a homepage grid. Controls have 44–48px tap targets. Native Chinese text wrapping should not create horizontal scrolling at 320px/375px/768px/1440px. Keyboard focus is visible on links, inputs, and buttons; selected feedback uses `aria-pressed`, not color alone. Avoid animation for visitors requesting reduced motion.
+The implemented CSS requests Chiron Sung HK and Noto Sans TC via Google Fonts with `display=swap` and system fallbacks. Physical-device testing should check Traditional Chinese glyph shape, network load, and fallback behavior. The project does **not** ship third-party font binaries.
 
-## Components
+Typeface sources: [Chiron Sung HK](https://github.com/chiron-fonts/chiron-sung-hk), [Noto fonts](https://notofonts.github.io/noto-docs/website/use/), [LXGW WenKai TC](https://github.com/lxgw/LxgwWenkaiTC), and [Iansui](https://github.com/ButTaiwan/iansui).
 
-- `Button` / `ButtonLink`: primary, secondary, quiet; proper semantics instead of clickable divs.
-- `TextField`: bound label, hint/error via `aria-describedby`, invalid state and focus.
-- `Eyebrow`, `SectionTitle`: restrained typographic hierarchy.
-- `TestimonyCard`: full image-backed preview linking to an internal detail page. In this design-demo only, photos are illustrative and do not assert publisher ownership.
-- `/stories/[id]`: fictional article preview with a return-to-feed link and no fabricated original-source action. Real story display rights and external links belong to MUY-37.
-- `FeedbackActions`: accessible toggle state and names, caller owns behavior.
-- `PreviewExperience`: **local-only illustrative state**; FE-02–04 must replace with real API interactions.
+## Feed and article visual rules
 
-## Unslop / layout review
+- The feed uses one vertical column, capped at approximately 620px even on desktop; this preserves the feel of reading instead of presenting a dense card grid.
+- Each preview is a complete link to its internal detail page. The title, summary, and publisher label remain accessible in HTML even when its background image is unavailable.
+- Four distinct photographic backgrounds provide atmosphere. A dark gradient beneath white overlaid text improves legibility; the imagery is **illustrative, not a depiction of a real testimony or person**.
+- The article view is narrower than the feed, with serif text, long line spacing, and a prominent path back to the feed.
+- Screens include an explicit notice that stories, text, and images are demonstrations.
 
-The original `web/app/page.tsx` was a functional but generic stack: a centered heading, repeated equal white cards, and little reading hierarchy. It had no fake hype or decorative images; the audit calls this **light slop**, not a broken UI. Read the real page in a browser and compare at phone and desktop widths; screenshots from the Playwright layout workflow are attached to the CI run where available.
+### Image provenance and release requirement
 
-Nine-pass changes:
-1. **Spacing:** consistent 4px rhythm; quiet header; more room around story titles.
-2. **Color:** warm paper neutrals and one moss accent, no gradients.
-3. **Icons:** no unnecessary icons or emoji; chapter line is geometric and understated.
-4. **Copy:** preserve the existing headline and explain that all sample stories are fictional.
-5. **Type:** serif display only for reading-level headings, accessible body copy for the rest.
-6. **Layout:** asymmetrical hero and text-first responsive card grid; one column on phones.
-7. **Details:** subtle hairlines, nested radii, no neon or decorative badges.
-8. **Visuals:** no fake testimony images or stock portraits without source permission.
-9. **Motion:** subtle color transitions, disabled for reduced-motion preferences.
+The CSS backgrounds are loaded from Pexels. They should be treated as demo-only external imagery rather than automatically approved production assets:
 
-### Audit decisions / remaining review gate
+1. [Warm Sunset Through Sheer Window Curtains — Ivett M](https://www.pexels.com/photo/warm-sunset-through-sheer-window-curtains-40735592/)
+2. [Serene Mountain Sunrise with Misty Valleys — Diogo Miranda](https://www.pexels.com/photo/serene-mountain-sunrise-with-misty-valleys-30322590/)
+3. [Tranquil Forest Pathway in Summer Sunlight — Sergej](https://www.pexels.com/photo/tranquil-forest-pathway-in-summer-sunlight-33314069/)
+4. [Sunlight Reflecting on Ocean Waves — Ty Nguyễn](https://www.pexels.com/photo/sunlight-reflecting-on-ocean-waves-32039473/)
 
-- Current site is a **design showcase**, not a complete onboarding/feed. The mock interaction state is browser memory only and cannot be mistaken for saved preferences.
-- Before merging: inspect actual before/after screenshots from CI; confirm no horizontal overflow at phone/desktop widths, legible Chinese line breaks, focus indicator, and tap targets. Keep any visual findings or follow-up notes in the PR.
-- After merging: FE-02 and FE-03 should reuse the components and tokens. Do not infer rights or source thumbnails from mock data.
+Before displaying actual testimony records, verify rights and source attribution, use a permitted image (or a text-first fallback), and avoid presenting atmospheric stock photography as an authentic photo of the author or the event. Check the image license and availability independently before redistributing images.
+
+## Accessibility and responsive behavior
+
+- Phone gutters are 16px at narrow sizes; the feed stays one column.
+- Interactive feedback controls have at least 44px target height; selected toggle states use `aria-pressed` rather than color alone.
+- Keyboard focus uses a visible outline. Links and buttons retain native semantic elements.
+- Chinese text wraps without horizontal scrolling. Article body uses increased line spacing for sustained reading.
+- Animation and scrolling behavior respect `prefers-reduced-motion`.
+- Decorative CSS backgrounds are not announced as content by screen readers.
+
+The browser workflow `.github/workflows/design-smoke.yml` builds the application, starts a local Next.js server, and runs `web/scripts/check-design-layout.mjs`. Its Playwright assertions exercise 320px, 375px, 768px, and 1280px viewports; check feed-to-article navigation and return; verify distinct backgrounds, mock feedback toggles, keyboard focus, and lack of horizontal overflow; and upload feed/article screenshots.
+
+For local work, install the web dependencies in `web/`, run `npm run dev`, and open `http://localhost:3000`. The browser screenshot script additionally requires Playwright and its Chromium browser; the GitHub workflow installs those dependencies in isolation. After changes, run `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` from `web/`.
+
+## Design review and next implementation work
+
+The design was reviewed using the nine areas described by the [Unslop](https://github.com/heydamir/unslop) methodology:
+
+1. **Spacing:** consistent margins and breathable card copy.
+2. **Color:** warm neutrals and a single functional accent.
+3. **Icons:** minimal geometric markers instead of decorative icon clutter.
+4. **Copy:** clear Traditional Chinese labels and unambiguous fictional-content notices.
+5. **Typography:** editorial serif for story reading; neutral sans for controls.
+6. **Layout:** a direct-to-feed vertical flow and separate focused article page.
+7. **Details:** consistent buttons, subtle borders, and visible control states.
+8. **Visuals:** distinct atmosphere imagery with explicit illustrative labeling.
+9. **Motion:** restrained transitions and reduced-motion handling.
+
+These notes describe the **current code**, not a claim that production content or usability research is complete. Reviewers should inspect the generated screenshots on both narrow and wide screens and test Chinese glyph readability on a physical phone.
+
+To make this into a functional product, subsequent work must replace fictional data with permission-reviewed testimonies, use the typed feed API, implement pagination and return-to-feed scroll restoration, record impressions only after a measured visibility threshold, connect feedback to user-owned persistence, and handle empty/loading/error states. The article page must link to an authorized publisher original or show content only when redistribution rights are established. None of these capabilities should be inferred from the design demo.
 
 ## Skill attribution
 
-The adapted Unslop skill in `web/.agents/skills/unslop/` is based on [Unslop by Damir Sokolovsky](https://github.com/heydamir/unslop), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See the local `NOTICE.md` for source, modifications, and attribution.
-
-## Feed-first product navigation (November 2026 revision)
-
-- Root `/` is the feed itself; there is no separate marketing homepage.
-- Tapping a card navigates to `/stories/[id]`, a demo article layout. A clear return link leads to the feed. The real feed must additionally preserve scroll position, fetch paginated recommendations, and link to approved originals under MUY-37.
-- The example article text is fully fictional, written specifically as UI fixture copy. Never present it as a Christian witness's actual testimony.
-
-## Traditional Chinese font survey
-
-| Family | Style | Decision |
-| --- | --- | --- |
-| **Chiron Sung HK (昭源宋體)** | Refined, balanced serif for Traditional Chinese | **Selected** for card and article titles and longer article passages, with Noto Serif TC fallback; SIL OFL 1.1 |
-| **Noto Sans TC** | Legible neutral sans; native traditional glyphs | **Selected** for navigation, controls and supporting text; SIL OFL |
-| LXGW WenKai TC (霞鶩文楷) | Friendly handwritten Kai style | Good accent option, not selected for dense UI |
-| Iansui (芫荽) | Distinctly Taiwanese handwriting style | Too playful for full reading interface; accent only |
-
-The selected Google Fonts styles are fetched as a CSS webfont with `display=swap` and system fallbacks. Test actual network/performance and Taiwan/HK glyph preferences on physical phones before launch; optimize font subsets or self-host later if third-party font requests are undesirable. Do not commit third-party font binaries without checking licenses.
-
-Research: https://github.com/chiron-fonts/chiron-sung-hk, https://notofonts.github.io/noto-docs/website/use/, https://github.com/lxgw/LxgwWenkaiTC, https://github.com/ButTaiwan/iansui.
-
-## Illustrative photo credits (demo only)
-
-The four CSS backgrounds in `web/app/globals.css` are fetched from Pexels. They are **not** source content, person portraits, or evidence that the fictional testimony happened. They are visibly marked `示意影像`. License terms and availability should be rechecked for redistribution, and these externally loaded photos should be replaced with local/approved assets prior to release.
-
-1. [Ivett M — Warm Sunset Through Sheer Window Curtains](https://www.pexels.com/photo/warm-sunset-through-sheer-window-curtains-40735592/)
-2. [Diogo Miranda — Serene Mountain Sunrise with Misty Valleys](https://www.pexels.com/photo/serene-mountain-sunrise-with-misty-valleys-30322590/)
-3. [Sergej — Tranquil Forest Pathway in Summer Sunlight](https://www.pexels.com/photo/tranquil-forest-pathway-in-summer-sunlight-33314069/)
-4. [Ty Nguyễn — Sunlight Reflecting on Ocean Waves](https://www.pexels.com/photo/sunlight-reflecting-on-ocean-waves-32039473/)
-
-Images are decorative CSS backgrounds and are not announced by screen readers; the meaningful story text is available separately in the markup. The scrim ensures white text remains readable. Actual thumbnails must be permission-reviewed; fallback to stable text-only styles when missing.
+The instructions in `web/.agents/skills/unslop/` are based on **Unslop** by Damir Sokolovsky, distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The vendored `NOTICE.md` identifies the upstream project and applicable attribution. The application-specific design rules and screenshot review process are recorded here; no association with the original author is implied.

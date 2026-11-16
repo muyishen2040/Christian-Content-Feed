@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Chiron+Sung+HK:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
-/* MUY-35: editorial / paper-and-ink design system, shared by onboarding & feed. */
+/* Shared paper-and-ink design tokens for the testimony feed and reading views. */
 :root {
   color-scheme: light;
   --ui-bg: #f7f5f0;
@@ -441,7 +441,7 @@ a {
   }
 }
 
-/* MUY-35 revision: the app opens straight into a one-column photo-backed feed. */
+/* The root route renders a one-column image-led testimony feed. */
 .app-shell {
   min-height: 100vh;
   padding-bottom: 64px;
