@@ -99,6 +99,33 @@ BEGIN
  GET DIAGNOSTICS n = ROW_COUNT;
  IF n <> 0 THEN RAISE EXCEPTION 'user A deleted user B'; END IF;
 
+ UPDATE public.feedback SET action = 'interested'
+ WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 1 THEN RAISE EXCEPTION 'user A could not update own feedback'; END IF;
+ UPDATE public.feedback SET action = 'interested'
+ WHERE user_id = '00000000-0000-4000-8000-0000000000b2';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 0 THEN RAISE EXCEPTION 'user A modified user B feedback'; END IF;
+
+ UPDATE public.saved_testimonies SET saved_at = now()
+ WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 1 THEN RAISE EXCEPTION 'user A could not update own saved item'; END IF;
+ DELETE FROM public.saved_testimonies
+ WHERE user_id = '00000000-0000-4000-8000-0000000000b2';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 0 THEN RAISE EXCEPTION 'user A deleted user B saved item'; END IF;
+
+ UPDATE public.feed_events SET event_name = 'click'
+ WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 1 THEN RAISE EXCEPTION 'user A could not update own feed event'; END IF;
+ UPDATE public.feed_events SET event_name = 'click'
+ WHERE user_id = '00000000-0000-4000-8000-0000000000b2';
+ GET DIAGNOSTICS n = ROW_COUNT;
+ IF n <> 0 THEN RAISE EXCEPTION 'user A modified user B feed event'; END IF;
+
  BEGIN
    PERFORM description_ciphertext FROM public.user_profiles;
    RAISE EXCEPTION 'client unexpectedly read encrypted profile text';
@@ -123,6 +150,21 @@ BEGIN
            '00000000-0000-4000-8000-000000000011',
            'save', '00000000-0000-4000-8000-000000000093');
    RAISE EXCEPTION 'user A inserted user B feedback';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+   INSERT INTO public.saved_testimonies (user_id, testimony_id)
+   VALUES ('00000000-0000-4000-8000-0000000000b2',
+           '00000000-0000-4000-8000-000000000012');
+   RAISE EXCEPTION 'user A inserted user B saved item';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+   INSERT INTO public.feed_events (user_id, testimony_id, event_name, page_view_id)
+   VALUES ('00000000-0000-4000-8000-0000000000b2',
+           '00000000-0000-4000-8000-000000000011', 'impression',
+           '00000000-0000-4000-8000-000000000083');
+   RAISE EXCEPTION 'user A inserted user B feed event';
  EXCEPTION WHEN insufficient_privilege THEN NULL;
  END;
 END $$;
