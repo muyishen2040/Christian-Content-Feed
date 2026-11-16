@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { FeedSessionProvider } from "@/components/feed-session-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Christian Content Feed · 開發預覽",
-  description: "見證故事探索應用的開發預覽",
+  title: "見證故事 · 開發預覽",
+  description: "繁體中文基督徒見證故事探索",
 };
 
 export default function RootLayout({
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="zh-Hant">
-      <body>{children}</body>
+      <body>
+        <FeedSessionProvider>{children}</FeedSessionProvider>
+      </body>
     </html>
   );
 }

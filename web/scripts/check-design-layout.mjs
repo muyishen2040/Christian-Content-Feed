@@ -19,6 +19,7 @@ try {
     const response = await page.goto(baseUrl, { waitUntil: "networkidle" });
     assert.equal(response?.status(), 200, `HTTP 200 at ${width}px`);
     await page.getByRole("heading", { name: "為你挑選的故事" }).waitFor();
+    await page.locator('[data-testid="testimony-card"]').nth(3).waitFor();
     assert.equal(await page.locator('[data-testid="testimony-card"]').count(), 4);
     assert.equal(await page.locator(".story-cover").count(), 4);
     assert.equal(await page.getByText("所有故事與圖片均為示意", { exact: false }).count(), 1);

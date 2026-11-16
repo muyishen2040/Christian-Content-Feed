@@ -14,6 +14,9 @@ export const storySchema = z
     summary: z.string().min(1),
     sourceName: z.string().min(1),
     sourceUrl: z.url().nullable(),
+    // Optional: real content may show a thumbnail only with recorded approval.
+    thumbnailUrl: z.url().nullable().optional(),
+    thumbnailApproved: z.boolean().optional(),
     topics: z.array(z.string()),
     publishedAt: z.iso.datetime(),
     isMock: z.boolean(),
