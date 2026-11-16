@@ -30,12 +30,6 @@ export function StoryVisibility({
       if (timer !== undefined) clearTimeout(timer);
       timer = undefined;
     };
-    const check = () => {
-      clear();
-      if (!visible && document.visibilityState === "visible") {
-        // Re-armed only after the observer confirms sufficient visibility.
-      }
-    };
     const observer = new IntersectionObserver(
       ([observation]) => {
         if (!observation) return;

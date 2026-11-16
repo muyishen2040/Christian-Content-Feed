@@ -6,7 +6,7 @@ import {
   useLayoutEffect,
   useRef,
 } from "react";
-import { FeedSessionProvider, useFeedSession } from "./feed-session-provider";
+import { useFeedSession } from "./feed-session-provider";
 import { StoryVisibility } from "./story-visibility";
 import { TestimonyCard } from "./ui/testimony-card";
 import { FeedbackActions } from "./ui/feedback-actions";
