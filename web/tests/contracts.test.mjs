@@ -73,6 +73,29 @@ test("UUIDs, public attribution and editorial summary are required", () => {
   );
 });
 
+test("publisher links accept only HTTP and HTTPS URLs", () => {
+  const published = { ...mockStories[0], isMock: false };
+  for (const sourceUrl of [
+    "https://publisher.example/story",
+    "http://publisher.example/story",
+  ]) {
+    assert.equal(
+      storySchema.safeParse({ ...published, sourceUrl }).success,
+      true,
+    );
+  }
+  for (const sourceUrl of [
+    "javascript:alert(1)",
+    "data:text/html,hello",
+    "file:///tmp/story",
+  ]) {
+    assert.equal(
+      storySchema.safeParse({ ...published, sourceUrl }).success,
+      false,
+    );
+  }
+});
+
 test("opaque feed cursor paginates with UUIDs and stable 1-based ranks", async () => {
   const mock = new MockApiClient();
   const one = await mock.getFeed({ limit: 2 });
