@@ -33,5 +33,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install -r pipeline/requirements.txt -r ml-service/requirements.txt -r ml-service/requirements-test.txt
+      - uses: actions/cache@v4
+        with:
+          path: ml-service/model_assets
+          key: embedding-model-${{ hashFiles('ml-service/prepare_model.py') }}
+      - name: Prepare and verify the model used by reference tests
+        run: python ml-service/prepare_model.py
       - run: python -m pytest pipeline/tests
       - run: python -m pytest ml-service/tests

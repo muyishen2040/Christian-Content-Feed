@@ -7,7 +7,7 @@
 3. Validate RLS with a disposable local DB:
    `psql -X -v ON_ERROR_STOP=1 "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/tests/rls.sql`.
    Tests wrap all synthetic fixtures in a transaction and roll back at the end.
-4. Rerun `supabase db reset` to verify a clean migration history. For extra repeatability checks, run the migration SQL a second time with psql in a disposable DB.
+4. Rerun `supabase db reset` to verify a clean migration history. Only replay individual migration SQL in a disposable DB: rerunning the initial migration alone restores broader grants until later migrations are reapplied in order.
 5. Use a *separate staging Supabase project* for real staging migration checks. Never run `db reset --linked` or copy staging credentials into previews pointing to real pilot users.
 
 ## Schema

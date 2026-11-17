@@ -3,10 +3,7 @@ name: Functional feed integration
 on:
   pull_request:
     paths:
-      - "web/app/**"
-      - "web/components/**"
-      - "web/lib/**"
-      - "web/scripts/check-functional-feed.mjs"
+      - "web/**"
       - ".github/workflows/feed-integration.yml"
   workflow_dispatch:
 

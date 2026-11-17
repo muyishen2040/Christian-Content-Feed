@@ -3,9 +3,7 @@ name: Mobile design screenshots and smoke
 on:
   pull_request:
     paths:
-      - "web/app/**"
-      - "web/components/**"
-      - "web/scripts/check-design-layout.mjs"
+      - "web/**"
       - ".github/workflows/design-smoke.yml"
   workflow_dispatch:
 
