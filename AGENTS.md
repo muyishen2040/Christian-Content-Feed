@@ -13,8 +13,8 @@ Mu An Shen (GitHub `danielshenmuan`) and Samuel / Mu-Yi Shen (GitHub `muyishen20
 A Linear ticket is one unit of work.
 
 1. **Start.** Read the ticket: description, Definition of Done (DoD), blockers. Set it to **In Progress**. Work on its own branch (the harness may fix the branch name; do not mix other tickets into it).
-2. **Build.** Keep working and committing locally until every DoD item is met and the tests pass.
-3. **Hand back.** Do **not push yet.** Tell the task owner: the DoD checklist with evidence, what changed, risks, open questions, and what the reviewer should look at.
+2. **Build.** Keep working and committing locally until the implementation and its tests are complete and passing, and every DoD item that can be met before a PR is met. DoD items about PR review or merge (for example "a reviewed PR") are met in steps 4 to 6, not here. Do not open the PR before the work and tests are complete.
+3. **Hand back.** Do **not push yet.** Tell the task owner: the DoD checklist with evidence (marking which items wait on PR review or merge), what changed, risks, open questions, and what the reviewer should look at.
 4. **Push.** When the task owner says to push, push the branch and open the PR (title starts with the ticket id; body has summary, how to verify, what is not included, ticket link). Request the other person as reviewer (`muyishen2040` for Mu An's tasks, `danielshenmuan` for Samuel's) unless the task owner says not to. Link the PR in the ticket and comment on it.
 5. **Review.** Check the PR when asked and at standup. If changes are requested, fix and commit locally, tell the task owner, and push when told.
 6. **Merge.** Merge only where the task owner has authorized it (authorized for Mu An's tasks; Samuel decides for Samuel's tasks). Once the reviewer's review is **approved** and checks are green, merge the PR, set the ticket to **Done** with a comment, and tell the task owner. If the review is not approved, checks fail or there are conflicts, do not merge: report instead.
