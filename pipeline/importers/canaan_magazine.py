@@ -9,6 +9,10 @@ What this importer does
 - Maps every row to the shape of the Supabase `testimonies` table (see supabase/migrations on the
   MUY-12 branch), always as an unreviewed, unpublished draft.
 - Drops author names: they are not stored (project rule), and the table has no author column.
+- Gives every row a stable `external_id` and `content_hash` that do not depend on row order, so a
+  loader can upsert safely when the catalog is reordered or an article is inserted.
+- Never fails silently: a range that cannot be fetched, or that is not a catalog page, is reported
+  by number, the batch is marked incomplete, and the exit code is non-zero.
 
 What it cannot do
 - Decide which articles are testimonies. The catalog has no usable category. `import_hint` is a
@@ -32,6 +36,7 @@ import urllib.request
 from dataclasses import dataclass
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import Callable
 
 CATALOG_BASE = "https://www.canaan.org.tw/code/mag-show.php?range={n}"
 CATALOG_RANGES = range(1, 8)  # ranges 1..7 = issues 1-350
@@ -51,6 +56,10 @@ _DATE = re.compile(r"^\d{4}\.\d{1,2}(\.\d{1,2})?$")
 _HINT = re.compile(r"見證|蒙恩|信主|得救|受洗|歸主|恩典|感恩|經歷|生命的|我的")
 
 
+class CatalogError(Exception):
+    """A catalog range could not be fetched or is not a catalog page."""
+
+
 @dataclass(frozen=True)
 class CatalogEntry:
     issue: int
@@ -58,7 +67,6 @@ class CatalogEntry:
     title: str
     page: str
     pdf_url: str | None
-    seq: int  # position of the row among rows with the same issue and page
 
 
 class _CatalogParser(HTMLParser):
@@ -106,8 +114,13 @@ def clean_text(value: str) -> str:
 
 
 def normalize_text(value: str) -> str:
-    """NFKC plus collapsed whitespace. Used only to build the content hash, never for display."""
+    """NFKC plus collapsed whitespace. Used only to build ids and hashes, never for display."""
     return clean_text(unicodedata.normalize("NFKC", value))
+
+
+def looks_like_catalog(html_text: str) -> bool:
+    """A real range page has the table header. An error page that returns HTTP 200 does not."""
+    return "期數" in html_text and "題目" in html_text
 
 
 def parse_catalog(html_text: str) -> list[CatalogEntry]:
@@ -116,7 +129,6 @@ def parse_catalog(html_text: str) -> list[CatalogEntry]:
     parser.feed(html_text)
     parser.close()
     entries: list[CatalogEntry] = []
-    seen: dict[tuple[int, str], int] = {}
     for row in parser.rows:
         if len(row) < 5:
             continue
@@ -126,20 +138,25 @@ def parse_catalog(html_text: str) -> list[CatalogEntry]:
         title = clean_text(title_cell["text"])
         if not title:
             continue
-        issue = int(issue_text["text"])
-        page = clean_text(page_cell["text"])
-        key = (issue, page)
-        seen[key] = seen.get(key, 0) + 1
         entries.append(
             CatalogEntry(
-                issue=issue,
+                issue=int(issue_text["text"]),
                 date=date_text["text"],
                 title=title,
-                page=page,
+                page=clean_text(page_cell["text"]),
                 pdf_url=_https(title_cell["href"]),
-                seq=seen[key],
             )
         )
+    return entries
+
+
+def parse_range(n: int, html_text: str) -> list[CatalogEntry]:
+    """Parse range `n`, raising CatalogError if it is not a catalog page or yields no articles."""
+    if not looks_like_catalog(html_text):
+        raise CatalogError(f"range {n}: response is not a catalog page")
+    entries = parse_catalog(html_text)
+    if not entries:
+        raise CatalogError(f"range {n}: catalog page contained no articles")
     return entries
 
 
@@ -151,9 +168,16 @@ def _https(url: str | None) -> str | None:
 
 
 def content_hash(entry: CatalogEntry) -> str:
-    """Stable per (source, issue, page, title). Does not depend on the author or on fetch time."""
+    """Stable per (source, issue, page, title). Independent of row order, author and fetch time."""
     basis = "|".join([SOURCE_KEY, str(entry.issue), entry.page, normalize_text(entry.title)])
     return hashlib.sha256(basis.encode("utf-8")).hexdigest()
+
+
+def external_id(entry: CatalogEntry) -> str:
+    """Stable id for upserts. Built from issue, page and the title, never from row position, so it
+    does not change when an article is inserted or the rows are reordered."""
+    digest = hashlib.sha256(normalize_text(entry.title).encode("utf-8")).hexdigest()[:10]
+    return f"ly{entry.issue}-p{entry.page or '0'}-{digest}"
 
 
 def import_hint(entry: CatalogEntry) -> str:
@@ -178,14 +202,13 @@ def to_source_row() -> dict:
 
 def to_testimony_row(entry: CatalogEntry) -> dict:
     """Row for public.testimonies, without id and source_id (the loader resolves source_id)."""
-    when = entry.date
     return {
         "source_key": SOURCE_KEY,  # loader replaces this with source_id
-        "external_id": f"ly{entry.issue}-p{entry.page or '0'}-{entry.seq}",
+        "external_id": external_id(entry),
         "content_hash": content_hash(entry),
         "content_type": "testimony",
         "title": entry.title,
-        "excerpt": f"《靈友》第{entry.issue}期（{when}）第{entry.page or '?'}頁。摘要待人工撰寫。",
+        "excerpt": f"《靈友》第{entry.issue}期（{entry.date}）第{entry.page or '?'}頁。摘要待人工撰寫。",
         "body": None,
         "source_name": SOURCE_NAME,
         "source_url": entry.pdf_url,
@@ -225,24 +248,38 @@ def validate_batch(batch: dict) -> list[str]:
     return problems
 
 
-def build_batch(pages: dict[int, str]) -> dict:
-    """Rows are idempotent: the same pages always give the same rows and hashes. Exact duplicates
-    (same issue, page and title, e.g. an article listed twice) collapse to the first row."""
+def build_batch(pages: dict[int, str], failures: list[dict] | None = None) -> dict:
+    """Build a batch from fetched pages. Rows are idempotent: the same pages always give the same
+    rows, ids and hashes, in any order. Exact duplicates (same issue, page and title) collapse to
+    the first row. A page that is not a catalog, or any fetch failure passed in, is recorded in
+    `stats.failed_ranges` and marks the batch incomplete."""
+    failed = list(failures or [])
     rows: list[dict] = []
     seen: set[str] = set()
     skipped = 0
     for n in sorted(pages):
-        for entry in parse_catalog(pages[n]):
+        try:
+            entries = parse_range(n, pages[n])
+        except CatalogError as exc:
+            failed.append({"range": n, "reason": str(exc)})
+            continue
+        for entry in entries:
             row = to_testimony_row(entry)
             if row["content_hash"] in seen:
                 skipped += 1
                 continue
             seen.add(row["content_hash"])
             rows.append(row)
+    failed.sort(key=lambda f: f["range"])
     return {
         "source": to_source_row(),
         "testimonies": rows,
-        "stats": {"rows": len(rows), "exact_duplicates_skipped": skipped},
+        "stats": {
+            "rows": len(rows),
+            "exact_duplicates_skipped": skipped,
+            "complete": not failed,
+            "failed_ranges": failed,
+        },
     }
 
 
@@ -252,35 +289,73 @@ def fetch_range(n: int, timeout: float = 30.0) -> str:
         return resp.read().decode("utf-8", errors="replace")
 
 
+def fetch_pages(
+    ranges: list[int],
+    fetcher: Callable[[int], str] | None = None,
+    retries: int = 2,
+    delay: float = 1.0,
+    sleep: Callable[[float], None] = time.sleep,
+) -> tuple[dict[int, str], list[dict]]:
+    """Fetch each range with bounded retries, one request per `delay` seconds. A range that still
+    fails is recorded as a failure and the remaining ranges are still fetched."""
+    fetch = fetcher or fetch_range
+    pages: dict[int, str] = {}
+    failures: list[dict] = []
+    for k, n in enumerate(ranges):
+        if k:
+            sleep(delay)
+        last: OSError | None = None
+        for attempt in range(retries + 1):
+            if attempt:
+                sleep(delay * attempt)
+            try:
+                pages[n] = fetch(n)
+                last = None
+                break
+            except OSError as exc:  # URLError, HTTPError, timeouts and socket errors
+                last = exc
+        if last is not None:
+            failures.append({"range": n, "reason": f"range {n}: fetch failed ({type(last).__name__}: {last})"})
+    return pages, failures
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--range", type=int, action="append", choices=list(CATALOG_RANGES),
                     help="catalog range 1-7 (repeatable). Default: all seven.")
     ap.add_argument("--from-dir", type=Path, help="read range<N>.html files from a directory instead of fetching")
-    ap.add_argument("--out", type=Path, help="write the JSON batch here instead of printing a summary")
+    ap.add_argument("--out", type=Path, help="write the JSON batch here instead of only printing a summary")
     ap.add_argument("--delay", type=float, default=1.0, help="seconds between requests (default 1)")
+    ap.add_argument("--retries", type=int, default=2, help="retries per range after a failed fetch (default 2)")
     args = ap.parse_args(argv)
 
     ranges = args.range or list(CATALOG_RANGES)
-    pages: dict[int, str] = {}
-    for k, n in enumerate(ranges):
-        if args.from_dir:
-            pages[n] = (args.from_dir / f"range{n}.html").read_text(encoding="utf-8", errors="replace")
-        else:
-            if k:
-                time.sleep(args.delay)
-            pages[n] = fetch_range(n)
+    if args.from_dir:
+        pages, failures = {}, []
+        for n in ranges:
+            try:
+                pages[n] = (args.from_dir / f"range{n}.html").read_text(encoding="utf-8", errors="replace")
+            except OSError as exc:
+                failures.append({"range": n, "reason": f"range {n}: cannot read file ({type(exc).__name__})"})
+    else:
+        pages, failures = fetch_pages(ranges, retries=args.retries, delay=args.delay)
 
-    batch = build_batch(pages)
+    batch = build_batch(pages, failures)
     problems = validate_batch(batch)
+    stats = batch["stats"]
     hints = sum(r["import_hint"] == "maybe_testimony" for r in batch["testimonies"])
-    skipped = batch["stats"]["exact_duplicates_skipped"]
-    print(f"rows={len(batch['testimonies'])} maybe_testimony={hints} duplicates_skipped={skipped} problems={len(problems)}", file=sys.stderr)
+    print(
+        f"rows={stats['rows']} maybe_testimony={hints} duplicates_skipped={stats['exact_duplicates_skipped']} "
+        f"complete={stats['complete']} problems={len(problems)}",
+        file=sys.stderr,
+    )
+    for f in stats["failed_ranges"]:
+        print("FAILED:", f["reason"], file=sys.stderr)
     for p in problems[:20]:
         print("PROBLEM:", p, file=sys.stderr)
     if args.out:
         args.out.write_text(json.dumps(batch, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return 1 if problems else 0
+    return 1 if problems or not stats["complete"] else 0
 
 
 if __name__ == "__main__":

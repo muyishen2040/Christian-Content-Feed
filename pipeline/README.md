@@ -23,7 +23,7 @@ Each row maps like this:
 
 | `testimonies` column | Value |
 |---|---|
-| `external_id` | `ly<issue>-p<page>-<n>` |
+| `external_id` | `ly<issue>-p<page>-<10-character digest of the title>`; stable when rows are reordered or an article is inserted |
 | `content_hash` | sha256 of source, issue, page and normalized title (stable between runs) |
 | `title` | article title as written in the catalog |
 | `excerpt` | bibliographic line only: issue, date and page. A person must replace it with our own summary |
@@ -41,6 +41,7 @@ Limits to know about:
 - Articles are PDFs, not web text pages.
 - The source's rights are `pending`: no reuse terms or copyright notice were found and robots.txt returns 404. Approve the source's rights before anything is published.
 - Exact duplicate catalog rows (same issue, page and title) collapse to one row and are counted in `stats.exact_duplicates_skipped`.
+- A range that cannot be fetched (after 2 retries, one request per second) or that is not a catalog page (for example an HTTP 200 error page) is reported by number in `stats.failed_ranges`, the batch is marked `complete: false`, the other ranges still load, and the exit code is 1. A loader must refuse a batch that is not complete.
 
 A loader that upserts the batch into Supabase (resolving `source_id` from `source_key`) is not written yet. It depends on MUY-12 landing and on a service-role key.
 
