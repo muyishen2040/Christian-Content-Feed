@@ -26,6 +26,7 @@ export function createHttpApiClient(fetcher: typeof fetch = fetch): ApiClient {
       ...init,
     });
     if (!response.ok) {
+      await response.body?.cancel().catch(() => {});
       // Do not reflect raw text, server traces or arbitrary error bodies into the UI.
       throw new ApiError(
         response.status,

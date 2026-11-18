@@ -209,6 +209,21 @@ test("feedback request validation rejects invalid undo and extra keys", () => {
   );
 });
 
+test("dismissing a loaded story does not skip unseen stories on the next page", async () => {
+  const mock = new MockApiClient();
+  const first = await mock.getFeed({ limit: 4 });
+  await mock.sendFeedback({
+    testimonyId: first.items[0].id,
+    action: "not_for_me",
+    requestId: id(601),
+  });
+  const next = await mock.getFeed({ limit: 4, cursor: first.nextCursor });
+  assert.deepEqual(
+    next.items.map((story) => story.id),
+    mockStories.slice(4).map((story) => story.id),
+  );
+});
+
 test("feedback is idempotent and conflicting request ID gives HTTP 409", async () => {
   const mock = new MockApiClient();
   const input = { testimonyId: storyId, action: "save", requestId: id(4) };
@@ -355,4 +370,21 @@ test("HTTP adapter uses typed route contracts and reports typed errors", async (
     () => api.getSaved(),
     (error) => error instanceof ApiError && error.status === 404,
   );
+});
+
+test("HTTP errors cancel unread response bodies", async () => {
+  let cancelled = false;
+  const body = new ReadableStream({
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const api = createHttpApiClient(
+    async () => new Response(body, { status: 503 }),
+  );
+  await assert.rejects(
+    () => api.getSaved(),
+    (error) => error instanceof ApiError && error.status === 503,
+  );
+  assert.equal(cancelled, true);
 });

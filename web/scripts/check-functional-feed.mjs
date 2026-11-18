@@ -38,11 +38,15 @@ function eventPath(url) {
 }
 
 async function newPage() {
-  return browser.newPage({
+  const page = await browser.newPage({
     viewport: { width: 375, height: 820 },
     locale: "zh-TW",
     reducedMotion: "reduce",
   });
+  await page.route((url) => url.pathname === "/api/saved", (route) =>
+    route.fulfill({ json: { items: [], nextCursor: null } }),
+  );
+  return page;
 }
 
 try {
@@ -87,6 +91,7 @@ try {
   assert.equal(await original.getAttribute("href"), "https://example.org/story/1");
   assert.equal(await original.getAttribute("target"), "_blank");
 
+  await page.locator('[data-testid="testimony-card"]').first().scrollIntoViewIfNeeded();
   await page.waitForTimeout(1500);
   assert.ok(events.some((event) =>
     event.eventName === "impression" &&

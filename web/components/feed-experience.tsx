@@ -137,70 +137,94 @@ function FeedContent() {
       {feed.entries[0]?.feedVariant === "baseline" ? (
         <p className="feed-collection-note">精選故事 · 從這裡開始探索</p>
       ) : null}
+      {feed.savedError ? (
+        <div className="feedback-load-error" role="alert">
+          <span>{feed.savedError}</span>
+          <button type="button" onClick={() => void feed.refreshSaved()}>
+            重試
+          </button>
+        </div>
+      ) : null}
       <div className="story-grid" data-testid="story-grid">
-        {feed.entries.map((entry, index) => {
-          const story = entry.story;
-          const selected = feed.previewFeedback[story.id] ?? {
-            reaction: null,
-            saved: false,
-          };
-          return (
-            <StoryVisibility
-              key={story.id}
-              entry={entry}
-              onImpression={onImpression}
-            >
-              <TestimonyCard
-                story={story}
-                number={story.rank || index + 1}
-                onOpen={() => {
-                  const top = Math.max(0, window.scrollY);
-                  feed.rememberPosition(top);
-                  window.sessionStorage.setItem(
-                    "testimony-feed:scroll-position",
-                    String(top),
-                  );
-                  feed.recordEvent(entry, "open");
-                }}
-                onExternalOpen={() => feed.recordEvent(entry, "click")}
-                actions={
-                  feed.isMock ? (
-                    <FeedbackActions
-                      label={`${story.title}的回饋`}
-                      reaction={selected.reaction}
-                      saved={selected.saved}
-                      onInterested={() =>
-                        feed.updatePreviewFeedback(story.id, {
-                          reaction:
-                            selected.reaction === "interested"
-                              ? null
-                              : "interested",
-                        })
-                      }
-                      onNotForMe={() =>
-                        feed.updatePreviewFeedback(story.id, {
-                          reaction:
-                            selected.reaction === "not_for_me"
-                              ? null
-                              : "not_for_me",
-                        })
-                      }
-                      onSave={() =>
-                        feed.updatePreviewFeedback(story.id, {
-                          saved: !selected.saved,
-                        })
-                      }
-                    />
-                  ) : undefined
-                }
-              />
-            </StoryVisibility>
-          );
-        })}
+        {feed.entries
+          .filter(
+            (entry) => feed.feedback[entry.story.id]?.reaction !== "not_for_me",
+          )
+          .map((entry, index) => {
+            const story = entry.story;
+            const selected = feed.feedback[story.id] ?? {
+              reaction: null,
+              saved: false,
+              busy: false,
+              error: null,
+            };
+            return (
+              <StoryVisibility
+                key={story.id}
+                entry={entry}
+                onImpression={onImpression}
+              >
+                <TestimonyCard
+                  story={story}
+                  number={story.rank || index + 1}
+                  onOpen={() => {
+                    const top = Math.max(0, window.scrollY);
+                    feed.rememberPosition(top);
+                    window.sessionStorage.setItem(
+                      "testimony-feed:scroll-position",
+                      String(top),
+                    );
+                    feed.recordEvent(entry, "open");
+                  }}
+                  onExternalOpen={() => feed.recordEvent(entry, "click")}
+                  actions={
+                    <>
+                      <FeedbackActions
+                        label={`${story.title}的回饋`}
+                        reaction={selected.reaction}
+                        saved={selected.saved}
+                        busy={
+                          selected.busy ||
+                          feed.savedLoading ||
+                          !!feed.savedError
+                        }
+                        onInterested={() =>
+                          void feed.sendFeedback(story, "interested")
+                        }
+                        onNotForMe={() =>
+                          void feed.sendFeedback(story, "not_for_me")
+                        }
+                        onSave={() =>
+                          void feed.sendFeedback(
+                            story,
+                            selected.saved ? "unsave" : "save",
+                          )
+                        }
+                      />
+                      {selected.error ? (
+                        <p className="feedback-error" role="alert">
+                          {selected.error}
+                        </p>
+                      ) : null}
+                    </>
+                  }
+                />
+              </StoryVisibility>
+            );
+          })}
       </div>
+      {feed.hasLoaded &&
+      feed.entries.length > 0 &&
+      feed.entries.every(
+        (entry) => feed.feedback[entry.story.id]?.reaction === "not_for_me",
+      ) ? (
+        <p className="feed-end-note">
+          這些故事已隱藏，你可以繼續探索或復原上次操作。
+        </p>
+      ) : null}
       {feed.isMock ? (
         <p className="feed-disclaimer" role="note">
-          開發預覽：所有故事與圖片均為示意，不代表真實見證或來源。互動不會儲存。
+          開發預覽：所有故事與圖片均為示意，不代表真實見證或來源。互動僅保留於本次瀏覽。
         </p>
       ) : null}
       {feed.status === "error" ? (
