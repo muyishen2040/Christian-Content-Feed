@@ -371,3 +371,20 @@ test("HTTP adapter uses typed route contracts and reports typed errors", async (
     (error) => error instanceof ApiError && error.status === 404,
   );
 });
+
+test("HTTP errors cancel unread response bodies", async () => {
+  let cancelled = false;
+  const body = new ReadableStream({
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const api = createHttpApiClient(
+    async () => new Response(body, { status: 503 }),
+  );
+  await assert.rejects(
+    () => api.getSaved(),
+    (error) => error instanceof ApiError && error.status === 503,
+  );
+  assert.equal(cancelled, true);
+});
