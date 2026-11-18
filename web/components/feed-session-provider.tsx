@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -16,6 +17,8 @@ import type {
   FeedResponse,
   ProfileInput,
   ProfileResponse,
+  Story,
+  FeedbackRequest,
 } from "@/lib/contracts";
 import {
   feedEventFor,
@@ -24,8 +27,14 @@ import {
 } from "@/lib/feed-pagination";
 
 type FeedStatus = "idle" | "loading" | "ready" | "error";
-type PreviewReaction = "interested" | "not_for_me" | null;
-type PreviewFeedback = { reaction: PreviewReaction; saved: boolean };
+type FeedbackState = {
+  reaction: "interested" | "not_for_me" | null;
+  saved: boolean;
+  busy: boolean;
+  error: string | null;
+};
+type FeedbackAction = Exclude<FeedbackRequest["action"], "undo">;
+type UndoTarget = { story: Story; eventId: string; action: FeedbackAction };
 
 type FeedState = {
   entries: FeedEntry[];
@@ -44,8 +53,15 @@ type FeedSession = FeedState & {
   readPosition: () => number;
   lookup: (id: string) => FeedEntry | undefined;
   recordEvent: (entry: FeedEntry, name: FeedEventRequest["eventName"]) => void;
-  previewFeedback: Record<string, PreviewFeedback>;
-  updatePreviewFeedback: (id: string, values: Partial<PreviewFeedback>) => void;
+  feedback: Record<string, FeedbackState>;
+  sendFeedback: (story: Story, action: FeedbackAction) => Promise<void>;
+  undoFeedback: () => Promise<void>;
+  dismissUndo: () => void;
+  undoTarget: UndoTarget | null;
+  savedStories: Story[];
+  savedLoading: boolean;
+  savedError: string | null;
+  refreshSaved: () => Promise<void>;
   dataSource: "mock" | "http";
 };
 
@@ -71,9 +87,16 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
     isMock: configuredDataSource === "mock",
     safetyState: "normal",
   });
-  const [previewFeedback, setPreviewFeedback] = useState<
-    Record<string, PreviewFeedback>
-  >({});
+  const [feedback, setFeedback] = useState<Record<string, FeedbackState>>({});
+  const [savedStories, setSavedStories] = useState<Story[]>([]);
+  const [savedLoading, setSavedLoading] = useState(true);
+  const [savedError, setSavedError] = useState<string | null>(null);
+  const [undoTarget, setUndoTarget] = useState<UndoTarget | null>(null);
+  const pendingFeedback = useRef(new Set<string>());
+  const retryFeedback = useRef(new Map<string, FeedbackRequest>());
+  const feedbackSequence = useRef(0);
+  const latestNoticeSequence = useRef(0);
+  const savedGeneration = useRef(0);
   const fetching = useRef<number | null>(null);
   const generation = useRef(0);
   const savedPosition = useRef(0);
@@ -137,7 +160,6 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
       savedPosition.current = 0;
       pageViewId.current = null;
       recordedImpressions.current.clear();
-      setPreviewFeedback({});
       setState({
         entries: [],
         status: "idle",
@@ -185,18 +207,139 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
     [client],
   );
 
-  const updatePreviewFeedback = useCallback(
-    (id: string, values: Partial<PreviewFeedback>) => {
-      setPreviewFeedback((current) => ({
+  const refreshSaved = useCallback(async () => {
+    const version = ++savedGeneration.current;
+    setSavedLoading(true);
+    setSavedError(null);
+    try {
+      const stories: Story[] = [];
+      const cursors = new Set<string>();
+      let cursor: string | undefined;
+      do {
+        const response = await client.getSaved({ limit: 20, cursor });
+        stories.push(...response.items);
+        cursor = response.nextCursor ?? undefined;
+        if (cursor && cursors.has(cursor))
+          throw new Error("Repeated saved cursor");
+        if (cursor) cursors.add(cursor);
+      } while (cursor);
+      if (version !== savedGeneration.current) return;
+      setSavedStories(stories);
+      const ids = new Set(stories.map((story) => story.id));
+      setFeedback((current) => {
+        const next = { ...current };
+        for (const [id, value] of Object.entries(next))
+          next[id] = { ...value, saved: ids.has(id) };
+        for (const story of stories)
+          next[story.id] = {
+            ...(next[story.id] ?? { reaction: null, busy: false, error: null }),
+            saved: true,
+          };
+        return next;
+      });
+    } catch {
+      if (version === savedGeneration.current)
+        setSavedError("目前無法載入收藏，請稍後再試。");
+    } finally {
+      if (version === savedGeneration.current) setSavedLoading(false);
+    }
+  }, [client]);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void refreshSaved();
+    });
+    return () => {
+      active = false;
+      savedGeneration.current += 1;
+    };
+  }, [refreshSaved]);
+
+  const applyFeedback = useCallback(
+    async (
+      story: Story,
+      action: FeedbackAction | "undo",
+      undoEventId?: string,
+    ) => {
+      if (pendingFeedback.current.has(story.id)) return;
+      pendingFeedback.current.add(story.id);
+      const sequence = ++feedbackSequence.current;
+      const previousRequest = retryFeedback.current.get(story.id);
+      const request: FeedbackRequest =
+        previousRequest?.action === action &&
+        previousRequest.undoEventId === undoEventId
+          ? previousRequest
+          : {
+              testimonyId: story.id,
+              action,
+              requestId: crypto.randomUUID(),
+              ...(undoEventId ? { undoEventId } : {}),
+            };
+      retryFeedback.current.set(story.id, request);
+      setFeedback((current) => ({
         ...current,
-        [id]: {
-          ...(current[id] ?? { reaction: null, saved: false }),
-          ...values,
+        [story.id]: {
+          ...(current[story.id] ?? { reaction: null, saved: false }),
+          busy: true,
+          error: null,
         },
       }));
+      try {
+        const result = await client.sendFeedback(request);
+        if (result.testimonyId !== story.id)
+          throw new Error("Mismatched feedback response");
+        retryFeedback.current.delete(story.id);
+        savedGeneration.current += 1;
+        setSavedLoading(false);
+        setFeedback((current) => ({
+          ...current,
+          [story.id]: {
+            reaction: result.reaction,
+            saved: result.saved,
+            busy: false,
+            error: null,
+          },
+        }));
+        setSavedStories((current) =>
+          result.saved
+            ? [story, ...current.filter((item) => item.id !== story.id)]
+            : current.filter((item) => item.id !== story.id),
+        );
+        if (action === "undo") {
+          setUndoTarget((current) =>
+            current?.story.id === story.id && current.eventId === undoEventId
+              ? null
+              : current,
+          );
+        } else if (sequence > latestNoticeSequence.current) {
+          latestNoticeSequence.current = sequence;
+          setUndoTarget({ story, eventId: result.eventId, action });
+        }
+      } catch {
+        setFeedback((current) => ({
+          ...current,
+          [story.id]: {
+            ...(current[story.id] ?? { reaction: null, saved: false }),
+            busy: false,
+            error: "無法更新，請再試一次。",
+          },
+        }));
+      } finally {
+        pendingFeedback.current.delete(story.id);
+      }
     },
-    [],
+    [client],
   );
+
+  const sendFeedback = useCallback(
+    (story: Story, action: FeedbackAction) => applyFeedback(story, action),
+    [applyFeedback],
+  );
+  const undoFeedback = useCallback(async () => {
+    if (undoTarget)
+      await applyFeedback(undoTarget.story, "undo", undoTarget.eventId);
+  }, [applyFeedback, undoTarget]);
 
   const contextValue: FeedSession = {
     ...state,
@@ -206,8 +349,15 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
     readPosition,
     lookup,
     recordEvent,
-    previewFeedback,
-    updatePreviewFeedback,
+    feedback,
+    sendFeedback,
+    undoFeedback,
+    dismissUndo: () => setUndoTarget(null),
+    undoTarget,
+    savedStories,
+    savedLoading,
+    savedError,
+    refreshSaved,
     dataSource: configuredDataSource,
   };
 

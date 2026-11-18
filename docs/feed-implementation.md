@@ -6,8 +6,8 @@ Christian Content Feed helps visitors discover Traditional Chinese personal Chri
 
 The frontend uses the typed `ApiClient` contract. It currently supports two **explicit** data modes:
 
-- `NEXT_PUBLIC_FEED_API_MODE=mock` (default): the existing in-memory `MockApiClient` serves six **fictional** stories for design and interaction testing. All such records are labeled as demonstrations; they do not have invented publisher URLs. Feedback toggles only affect in-memory presentation.
-- `NEXT_PUBLIC_FEED_API_MODE=http`: the frontend calls `GET /api/feed` and `POST /api/feed/events` via the existing typed HTTP adapter, without silently replacing failed backend responses with mock records. Use this only once the real endpoints are available. The repository's existing mock GET endpoint is explicitly gated and is **not** a substitute for a production feed.
+- `NEXT_PUBLIC_FEED_API_MODE=mock` (default): the in-memory `MockApiClient` serves six **fictional** stories. Feedback and Saved work only during the current browser session and are lost on reload.
+- `NEXT_PUBLIC_FEED_API_MODE=http`: the frontend uses the typed feed, feedback, and Saved endpoints without substituting mock data on failure. These endpoints and anonymous identity are not implemented yet; use HTTP mode only when they are available.
 
 The two modes are selected at **build time**. In the browser integration workflow, the HTTP endpoints are **intercepted** with fictional test responses. That does not constitute a deployed production backend or publisher approval.
 
@@ -33,7 +33,13 @@ The first request uses `getFeed({ limit: 4 })`; subsequent requests pass the ret
 
 Additional pages load when an IntersectionObserver sees the bottom sentinel, with an explicit **載入更多故事** button for accessibility and manual recovery. Empty data produces a dedicated empty state. Failed requests produce a retry action; previously loaded content remains visible if a later page fails.
 
-The session provider stays mounted across client-side feed ↔ article navigation. It keeps already loaded pages, local demonstration feedback, and the last viewport position in memory, then restores the viewport on return. A single **numeric scroll offset** is temporarily placed in `sessionStorage` during an internal story visit, then cleared on successful restoration. **No personal descriptions, cursor tokens, story text, or browsing history are persisted to localStorage or application servers by this frontend.** A full page reload or direct deep link to an unknown real story may lose in-memory context. Direct-link support requires a separate authenticated, rights-aware single-story API.
+The session provider stays mounted across client-side navigation. It keeps loaded pages, feedback state, and the last viewport position in memory. A numeric scroll offset is temporarily placed in `sessionStorage` during an article visit. The frontend does not put personal descriptions, story text, feedback, or browsing history in browser storage. HTTP mode sends feedback to the configured same-origin API. Direct links to unknown real stories still require a separate rights-aware single-story API.
+
+## Feedback and Saved
+
+Icon buttons provide Interested, Not for me, and Save with accessible labels. A successful action can be undone; Not for me hides the exact card without restarting the feed. Failed requests leave the last confirmed state visible and allow retry with the same request ID. The Saved page loads all pages from the API, allows removal, and can open a saved story even if it is not in the loaded feed.
+
+Mock interactions are in memory only. Saved-after-refresh behavior requires the future authenticated backend (MUY-26 and MUY-29); the browser integration test simulates that backend and does not prove persistence is deployed.
 
 ## Source content, article view and image rights
 
@@ -66,7 +72,7 @@ npm test
 npm run build
 ```
 
-The repository's **Mobile design screenshots and smoke** workflow tests the fictional mock appearance and 320, 375, 768 and 1280px layouts. The separate **Functional feed integration** workflow builds the application with `NEXT_PUBLIC_FEED_API_MODE=http`, intercepts fake responses in Playwright, and validates initial loading, cursor requests, duplicate filtering, source links, rights-gated images, event attribution, scroll restoration, and empty/error recovery. No real publisher API is contacted.
+The mobile smoke workflow checks the fictional mock layout. The functional feed workflow intercepts fictional HTTP responses and checks navigation, feedback, undo, Saved across refresh, pagination, and error recovery. No real publisher or user data is used.
 
 ## What is not implemented
 

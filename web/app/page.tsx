@@ -14,9 +14,14 @@ export default function FeedPage() {
           <span className="wordmark-line" aria-hidden="true" />
           見證故事
         </Link>
-        <Link className="feed-settings-link" href="/personalize">
-          調整推薦
-        </Link>
+        <nav className="feed-nav" aria-label="主要導覽">
+          <Link className="feed-settings-link" href="/saved">
+            我的收藏
+          </Link>
+          <Link className="feed-settings-link" href="/personalize">
+            調整推薦
+          </Link>
+        </nav>
       </header>
       <main id="feed" className="feed-layout">
         <div className="feed-intro">

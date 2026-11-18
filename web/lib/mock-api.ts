@@ -160,22 +160,35 @@ export class MockApiClient implements ApiClient {
 
   async getFeed(query: FeedQuery = {}): Promise<FeedResponse> {
     const variant: PageVariant = this.activeVariant;
-    const available = mockStories.filter(
-      (story) => this.feedback.get(story.id)?.reaction !== "not_for_me",
-    );
-    const chunk = page(available, query, "feed", variant);
+    const { cursor, limit } = feedQuerySchema.parse(query);
+    const start = cursor ? decodeCursor(cursor, "feed", variant) : 0;
+    if (start > mockStories.length) {
+      throw new ApiError(
+        400,
+        "INVALID_CURSOR",
+        "Cursor points outside the result set",
+      );
+    }
+    const items: FeedResponse["items"] = [];
+    let offset = start;
+    while (offset < mockStories.length && items.length < limit) {
+      const story = mockStories[offset++];
+      if (this.feedback.get(story.id)?.reaction !== "not_for_me") {
+        items.push({ ...story, rank: offset });
+      }
+    }
+    const nextCursor =
+      offset < mockStories.length
+        ? encodeCursor(offset, "feed", variant)
+        : null;
     const batchId = crypto.randomUUID();
-    const items = chunk.items.map((story, offset) => ({
-      ...story,
-      rank: chunk.start + offset + 1,
-    }));
     this.batches.set(batchId, {
       variant,
       ranks: new Map(items.map((item) => [item.id, item.rank])),
     });
     return {
       items,
-      nextCursor: chunk.nextCursor,
+      nextCursor,
       batchId,
       feedVariant: variant,
       safetyState: "normal",

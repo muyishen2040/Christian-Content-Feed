@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FeedSessionProvider } from "@/components/feed-session-provider";
+import { FeedbackNotice } from "@/components/feedback-notice";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body>
-        <FeedSessionProvider>{children}</FeedSessionProvider>
+        <FeedSessionProvider>
+          {children}
+          <FeedbackNotice />
+        </FeedSessionProvider>
       </body>
     </html>
   );

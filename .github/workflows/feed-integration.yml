@@ -42,3 +42,5 @@ jobs:
           exit 1
       - name: Exercise API paging, impressions, content rights and recovery states
         run: node scripts/check-functional-feed.mjs
+      - name: Exercise feedback and Saved with a simulated API
+        run: node scripts/check-feedback.mjs

@@ -11,6 +11,7 @@ export function StoryReadingView({ storyId }: { storyId: string }) {
   const entry = session.lookup(storyId);
   const story =
     entry?.story ??
+    session.savedStories.find((item) => item.id === storyId) ??
     (session.dataSource === "mock"
       ? mockStories.find((item) => item.id === storyId)
       : undefined);
