@@ -14,6 +14,8 @@ import type {
   ApiClient,
   FeedEventRequest,
   FeedResponse,
+  ProfileInput,
+  ProfileResponse,
 } from "@/lib/contracts";
 import {
   feedEventFor,
@@ -37,6 +39,7 @@ type FeedState = {
 
 type FeedSession = FeedState & {
   loadMore: () => Promise<void>;
+  saveOnboarding: (input: ProfileInput) => Promise<ProfileResponse>;
   rememberPosition: (top: number) => void;
   readPosition: () => number;
   lookup: (id: string) => FeedEntry | undefined;
@@ -71,20 +74,27 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
   const [previewFeedback, setPreviewFeedback] = useState<
     Record<string, PreviewFeedback>
   >({});
-  const fetching = useRef(false);
+  const fetching = useRef<number | null>(null);
+  const generation = useRef(0);
   const savedPosition = useRef(0);
   const pageViewId = useRef<string | null>(null);
   const recordedImpressions = useRef(new Set<string>());
 
   const loadMore = useCallback(async () => {
-    if (fetching.current || (state.hasLoaded && !state.nextCursor)) return;
-    fetching.current = true;
+    const requestGeneration = generation.current;
+    if (
+      fetching.current === requestGeneration ||
+      (state.hasLoaded && !state.nextCursor)
+    )
+      return;
+    fetching.current = requestGeneration;
     const cursor = state.hasLoaded
       ? (state.nextCursor ?? undefined)
       : undefined;
     setState((previous) => ({ ...previous, status: "loading", error: null }));
     try {
       const response = await client.getFeed({ limit: PAGE_SIZE, cursor });
+      if (generation.current !== requestGeneration) return;
       setState((previous) => {
         const merged = mergeFeedPage(previous.entries, response);
         // A buggy cursor or endlessly repeated page must never create an
@@ -105,6 +115,7 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
         };
       });
     } catch {
+      if (generation.current !== requestGeneration) return;
       // Never include arbitrary API bodies or private user text in UI errors.
       setState((previous) => ({
         ...previous,
@@ -112,9 +123,34 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
         error: "故事暫時無法載入，請重試或稍後再來。",
       }));
     } finally {
-      fetching.current = false;
+      if (fetching.current === requestGeneration) fetching.current = null;
     }
   }, [client, state.hasLoaded, state.nextCursor]);
+
+  const saveOnboarding = useCallback(
+    async (input: ProfileInput): Promise<ProfileResponse> => {
+      // Only commit the feed refresh if the profile request succeeded.
+      // Invalidate any older request so stale results cannot overwrite it.
+      const response = await client.saveProfile(input);
+      generation.current += 1;
+      fetching.current = null;
+      savedPosition.current = 0;
+      pageViewId.current = null;
+      recordedImpressions.current.clear();
+      setPreviewFeedback({});
+      setState({
+        entries: [],
+        status: "idle",
+        hasLoaded: false,
+        nextCursor: null,
+        error: null,
+        isMock: configuredDataSource === "mock",
+        safetyState: response.safetyState,
+      });
+      return response;
+    },
+    [client],
+  );
 
   const rememberPosition = useCallback((top: number) => {
     savedPosition.current = Math.max(0, top);
@@ -165,6 +201,7 @@ export function FeedSessionProvider({ children }: { children: ReactNode }) {
   const contextValue: FeedSession = {
     ...state,
     loadMore,
+    saveOnboarding,
     rememberPosition,
     readPosition,
     lookup,

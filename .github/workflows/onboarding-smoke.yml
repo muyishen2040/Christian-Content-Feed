@@ -1,0 +1,57 @@
+name: Optional onboarding smoke
+
+on:
+  pull_request:
+    paths:
+      - "web/app/**"
+      - "web/components/**"
+      - "web/lib/**"
+      - "web/scripts/check-onboarding.mjs"
+      - ".github/workflows/onboarding-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  onboarding:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        data-mode: [mock, http]
+    defaults:
+      run:
+        working-directory: web
+    env:
+      NEXT_PUBLIC_FEED_API_MODE: ${{ matrix.data-mode }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Install isolated Playwright dependency
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start isolated Next.js preview
+        run: |
+          npm run start > /tmp/onboarding-preview.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:3000 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/onboarding-preview.log
+          exit 1
+      - name: Verify onboarding skip, consent, personalized, support and error paths
+        run: node scripts/check-onboarding.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: onboarding-screenshots-${{ matrix.data-mode }}
+          path: web/artifacts/onboarding-${{ matrix.data-mode }}/*.png
+          retention-days: 14
