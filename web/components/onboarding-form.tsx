@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { profileInputSchema, type ProfileInput } from "@/lib/contracts";
 import { useFeedSession } from "./feed-session-provider";
 import { dismissWelcome } from "./welcome-prompt";
@@ -19,8 +19,22 @@ export function OnboardingForm() {
   const [storePreferences, setStorePreferences] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const stillOnForm = useRef(true);
+
+  useEffect(() => {
+    stillOnForm.current = true;
+    return () => {
+      stillOnForm.current = false;
+    };
+  }, []);
+
+  function leaveForm() {
+    // A response must not redirect someone who already chose another page.
+    stillOnForm.current = false;
+  }
 
   function skip() {
+    leaveForm();
     dismissWelcome();
     router.replace("/");
   }
@@ -46,6 +60,7 @@ export function OnboardingForm() {
     setBusy(true);
     try {
       const response = await saveOnboarding(result.data);
+      if (!stillOnForm.current) return;
       // Never keep the voluntary description in a client-side cache or browser
       // storage after submission, including when support is recommended.
       setDescription("");
@@ -60,9 +75,11 @@ export function OnboardingForm() {
       }
     } catch {
       // Never reflect server error bodies, raw inputs or stack traces into UI.
-      setError("目前無法完成設定。你可以重試，或直接探索故事。");
+      if (stillOnForm.current) {
+        setError("目前無法完成設定。你可以重試，或直接探索故事。");
+      }
     } finally {
-      setBusy(false);
+      if (stillOnForm.current) setBusy(false);
     }
   }
 
@@ -150,7 +167,7 @@ export function OnboardingForm() {
       <section className="onboarding-privacy" aria-labelledby="privacy-heading">
         <h2 id="privacy-heading">關於你的分享</h2>
         <p>
-          文字會交由本服務的伺服器處理，以尋找相關見證並提供必要的安全回應，
+          正式服務會在自己的伺服器處理你分享的文字，用於尋找相關見證，
           不會送至外部 AI 推論服務。預設不保留原文，也不會將文字送往分析工具。
         </p>
         <label className="onboarding-consent">
@@ -202,8 +219,12 @@ export function OnboardingForm() {
         </button>
       </div>
       <div className="onboarding-footer-links">
-        <Link href="/support">現在需要幫助？</Link>
-        <Link href="/">返回故事動態</Link>
+        <Link href="/support" onClick={leaveForm}>
+          現在需要幫助？
+        </Link>
+        <Link href="/" onClick={leaveForm}>
+          返回故事動態
+        </Link>
       </div>
     </form>
   );

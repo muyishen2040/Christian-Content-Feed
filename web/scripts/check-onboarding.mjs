@@ -216,6 +216,54 @@ try {
     console.log("PASS: support response chooses a separate safe view and default feed access");
     await support.close();
 
+    // A slow profile response must not override an explicit navigation away
+    // from the form. The help destination remains the user's chosen page.
+    const delayed = await makePage();
+    let releaseProfileResponse;
+    const responseGate = new Promise((resolve) => {
+      releaseProfileResponse = resolve;
+    });
+    let confirmRequestStarted;
+    const requestStarted = new Promise((resolve) => {
+      confirmRequestStarted = resolve;
+    });
+    await delayed.route((url) => url.pathname === "/api/profile", async (route) => {
+      confirmRequestStarted();
+      await responseGate;
+      try {
+        await route.fulfill({
+          json: {
+            profile: {
+              description: null,
+              topics: [],
+              consentStorePreferences: false,
+              consentKeepText: false,
+            },
+            safetyState: "normal",
+            feedMode: "personalized",
+          },
+        });
+      } catch {
+        // Navigation may cancel the outgoing request. It must still never
+        // redirect the visitor away from the page they selected.
+      }
+    });
+    await delayed.goto(`${baseUrl}/personalize`);
+    await delayed.locator("#personal-description").fill("測試延遲的個人化請求");
+    await delayed.getByTestId("show-my-feed").click();
+    await requestStarted;
+    await delayed.getByRole("link", { name: "現在需要幫助？" }).click();
+    await delayed.getByRole("heading", { name: "需要有人陪你走過此刻嗎？" }).waitFor();
+    releaseProfileResponse();
+    await delayed.waitForTimeout(400);
+    assert.equal(
+      new URL(delayed.url()).pathname,
+      "/support",
+      "A delayed profile response must not redirect after navigating to support",
+    );
+    console.log("PASS: leaving the form for help is not overridden by a delayed response");
+    await delayed.close();
+
     const retry = await makePage();
     let calls = 0;
     await retry.route((url) => url.pathname === "/api/profile", (route) => {

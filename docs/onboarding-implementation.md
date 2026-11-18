@@ -16,7 +16,7 @@ The form uses `profileInputSchema` and calls `saveOnboarding` on the existing `F
 
 - Blank or skipped visits have a default/curated feed. Skipping does **not** call the profile API.
 - A successful `saveProfile` returns `feedMode: personalized | default | support`. The provider resets cached feed pages, rank/batch state, and scroll position on successful profile changes before reloading recommendations. It invalidates in-flight older feed requests to prevent stale results.
-- Failed submissions preserve the unsent form for retry or skipping. Error messages do not include user text or raw backend errors.
+- Failed submissions preserve the unsent form for retry or skipping. Error messages do not include user text or raw backend errors. If a visitor navigates away while submission is pending, its eventual response does not redirect them away from their chosen destination.
 - The form always sends `consentKeepText: false`. The optional checkbox controls `consentStorePreferences`. The description is never put into localStorage, sessionStorage, analytics events, or client logs by this interface.
 - Age and gender remain outside the ranking calculation. The `topics` contract field is sent as an empty list; a separate preference editor can introduce an explicit topic picker later.
 
@@ -27,7 +27,7 @@ The form uses `profileInputSchema` and calls `saveOnboarding` on the existing `F
 
 ### Privacy and consent boundaries
 
-The planned backend uses an internally hosted inference model rather than a third-party AI inference API. The frontend accurately communicates that raw text is processed by the service and that retaining anonymous preferences requires an explicit choice. It never requests raw-text retention and does not persist sensitive form fields locally.
+The planned backend uses an internally hosted inference model rather than a third-party AI inference API. The onboarding UI does not claim to detect crises or automatically provide safety screening; visitors may choose the help link at any time. The frontend accurately communicates that raw text is processed by the service and that retaining anonymous preferences requires an explicit choice. It never requests raw-text retention and does not persist sensitive form fields locally.
 
 The backend must honor `consentStorePreferences`, discard raw text by default, avoid sensitive input logs, and ensure a safety-flagged input cannot influence ranking. **This frontend and its tests do not certify the backend's privacy implementation**. Do not deploy the HTTP mode as production-ready until the identity, privacy and safety API review is complete.
 
@@ -55,7 +55,7 @@ npm run build
 The GitHub workflow `.github/workflows/onboarding-smoke.yml` runs two build variants:
 
 1. **Mock mode:** verifies first-visit invitation, dismiss and reload behavior, skip, all-blank submission, optional inputs, current-session personalization, and absence of raw text in browser storage.
-2. **HTTP mode:** intercepts the same-origin profile/feed requests with **synthetic responses**, verifying consent payloads, successful personalized/default routing, safety-support routing, backend failure/retry, and skip without submitting text.
+2. **HTTP mode:** intercepts the same-origin profile/feed requests with **synthetic responses**, verifying consent payloads, successful personalized/default routing, safety-support routing, backend failure/retry, delayed-response navigation away from the form, and skip without submitting text.
 
 Both variants capture full-page screenshots of `/personalize` at 320, 375, 768 and 1280px and check for horizontal overflow. The existing responsive feed and HTTP feed browser suites continue to cover the feed itself.
 
