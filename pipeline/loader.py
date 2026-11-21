@@ -232,9 +232,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--confirm-host", help="must equal the host in SUPABASE_URL when using --apply")
     args = ap.parse_args(argv)
 
-    from pipeline.importers import canaan_magazine
+    from pipeline.importers import canaan_magazine, donghu, luke54
 
-    adapters = {canaan_magazine.SOURCE_KEY: canaan_magazine}  # register each new importer here
+    # Register each new importer here.
+    adapters = {m.SOURCE_KEY: m for m in (canaan_magazine, donghu, luke54)}
     if args.source_key not in adapters:
         print(f"REFUSED: unknown source key {args.source_key!r}; known: {sorted(adapters)}", file=sys.stderr)
         return 2

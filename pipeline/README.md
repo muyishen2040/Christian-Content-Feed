@@ -43,6 +43,44 @@ Limits to know about:
 - Exact duplicate catalog rows (same issue, page and title) collapse to one row and are counted in `stats.exact_duplicates_skipped`.
 - A range that cannot be fetched (after 2 retries, one request per second) or that is not a catalog page (for example an HTTP 200 error page) is reported by number in `stats.failed_ranges`, the batch is marked `complete: false`, the other ranges still load, and the exit code is 1. A loader must refuse a batch that is not complete.
 
+### `importers/luke54.py` — 水深之處 (luke54.org)
+
+```sh
+# Dry run on the newest 100 articles (1 request per second). A full run is ~14,500 requests: use --limit.
+python -m pipeline.importers.luke54 --limit 100 --out batch.json
+
+# Offline, from saved files (sitemap.xml and article<ID>.html) in a directory.
+python -m pipeline.importers.luke54 --from-dir saved_pages --limit 50
+```
+
+- Takes article ids from the sitemap, then reads only each page's `<head>` (`og:title`, `og:description`). It never reads the body or the author tag.
+- The description is read transiently to classify and is dropped; it is never in a row, batch, log or error.
+- `external_id` is `luke54-<article id>`; `content_hash` depends only on the source and id, so reruns are identical even if a title is edited.
+- Any article that fails to load is reported by id and marks the batch incomplete (the loader refuses it). Rerun it; the loader skips rows it already has.
+
+### `importers/donghu.py` — 東湖禮拜堂 (dhchurch.org.tw)
+
+```sh
+python -m pipeline.importers.donghu --out batch.json
+```
+
+- Uses the WordPress REST API for the 見證分享 category only (found by exact name; the run refuses if it is not exactly one category). It requests `id,link,title` only, so no post body is ever fetched.
+- Removes the generic 《見證分享》 prefix. A title can still contain a person's name: **a person must check each title before approval** (no author names are stored).
+- `external_id` is `donghu-<post id>`.
+
+### Shared rules (`importers/common.py`)
+
+- **robots.txt first.** A URL is fetched only if robots.txt allows it for our agent *and* for GPTBot, ClaudeBot, anthropic-ai, CCBot, Google-Extended and PerplexityBot. A missing robots.txt (404) means no rules; any other error refuses.
+- **Polite.** https only, one request per `--delay` seconds, bounded retries (5xx, 429 and network errors; a 404 is not retried).
+- **First-pass classifier** (`common.classify`), applied to the title and, for luke54, the transient description:
+  - excluded-source words (真耶穌教會, 全能神, 東方閃電) → rejected;
+  - crisis words (自殺, 輕生, 自殘, 憂鬱症, 家暴, 性侵 and similar) → **held out of the batch**, listed by id only in `stats.held_for_review` for a person to look at, never as a row;
+  - sermon, announcement, signup and how-to-testify titles → rejected;
+  - everything else is a draft candidate, `import_hint` `likely_testimony` (the title says 見證, or the description is first person) or `needs_review`.
+  - This is a keyword filter, not a judgment. A person still reads every candidate.
+- **Rows** are drafts with a placeholder excerpt and no topics. Our own summary and tags are a later step (MUY-49); these importers do not write one.
+- If Python reports `CERTIFICATE_VERIFY_FAILED` on macOS, the python.org install is missing its CA bundle: run its `Install Certificates.command`, or set `SSL_CERT_FILE=/etc/ssl/cert.pem` for the run. Do not disable verification.
+
 ## Loader: `loader.py`
 
 Loads a batch written by an importer (`--out`) into the `sources` and `testimonies` tables.
@@ -79,7 +117,7 @@ Run against the staging project from MUY-46 after its migrations are applied. Us
 5. In the staging dashboard, confirm every loaded row is `pending`/`pending`/`draft` and that none is visible to the anon key.
 6. Record the date, counts and result in the MUY-16 ticket. Do not record keys.
 
-Not yet written: adapters for luke54.org and 東湖禮拜堂 (text pages; MUY-16 still open), and OCR for the Canaan PDFs (MUY-49).
+Not yet written: our own summaries and topic tags, and OCR for the Canaan PDFs (MUY-49).
 
 ## Tests
 
@@ -87,4 +125,4 @@ Not yet written: adapters for luke54.org and 東湖禮拜堂 (text pages; MUY-16
 python -m pytest pipeline/tests
 ```
 
-`fixtures/canaan_magazine_range_sample.html` is synthetic and imitates the catalog's malformed markup. `fixtures/approved_sample.json` is the 10-source sample for human review (see `fixtures/REVIEW.md`).
+`fixtures/luke54/` and `fixtures/donghu/` are synthetic too (fictional titles; crisis and excluded-source words are placed in article bodies on purpose, to prove bodies are not read). `fixtures/canaan_magazine_range_sample.html` is synthetic and imitates the catalog's malformed markup. `fixtures/approved_sample.json` is the 10-source sample for human review (see `fixtures/REVIEW.md`).
