@@ -18,7 +18,8 @@ Check the free-plan limits (database size, projects per organization) before add
 ## Tool
 
 `supabase/scripts/staging_db.py` talks to the Supabase Management API over HTTPS, standard library only.
-It writes nothing unless `--apply` is given (migrate, seed) or the command is `verify` (see below).
+`migrate` and `seed-synthetic` write only with `--apply`; `verify` rolls back its test writes.
+`verify-live` creates an anonymous staging user on every run and does not remove it.
 
 ```sh
 export SUPABASE_ACCESS_TOKEN=...      # short-lived personal access token; never in chat, Linear or git
@@ -32,10 +33,9 @@ python3 supabase/scripts/staging_db.py seed-synthetic --project-ref $REF --apply
 python3 supabase/scripts/staging_db.py verify-live --project-ref $REF --anon-key <public publishable key>
 ```
 
-Guards, all checked before any write: the project's real name must contain `staging`; its ref must not be in
-`PRODUCTION_PROJECT_REFS`; `--confirm-name` must equal the project name exactly; the project must be
-`ACTIVE_HEALTHY`. There is no reset, drop or truncate command. The token is read from the environment only and
-is never printed. Only the public anon key is ever fetched (for `verify-live`).
+All commands check the project name and optional production ref blocklist. Migration, seed and SQL verification
+also require the exact `--confirm-name`. There is no reset, drop or truncate command. The access token is read
+from the environment and never printed. Supply the public key for `verify-live`; it does not fetch API keys.
 
 What each command does:
 
@@ -49,10 +49,9 @@ What each command does:
   own fixture ids, so the seed rows do not affect them.
 - `seed-synthetic` loads `supabase/seed/staging_synthetic.sql`: 2 fictional approved stories and 1 hidden draft,
   all on `example.invalid`. Safe to rerun.
-- `verify-live` signs in anonymously with the anon key and reads through the REST API: it must see only the
-  approved synthetic stories, no private columns (`body`, `private_import_notes`, `description_ciphertext`) and no
-  other user's feedback, Saved items or events. It needs anonymous sign-ins enabled in the project's Auth settings
-  (`supabase/config.toml` has them on locally; set the same in the dashboard).
+- `verify-live` signs in anonymously and reads the REST API. It checks both approved fixture IDs are visible,
+  the draft fixture ID is hidden in the view and table, private columns are inaccessible, and no existing user rows are visible. An
+  empty result alone does not prove cross-user isolation when no other user's data exists; `verify` tests that.
 
 ## What was and was not verified
 
@@ -82,15 +81,26 @@ Create it at Supabase > Account > Access Tokens, scoped to **Project**, organiza
 | Variable | Local | Preview (staging) | Production |
 |---|---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | local | staging project only | production project only |
-| `SUPABASE_SERVICE_ROLE_KEY` | local | staging key, server-side only | production key, server-side only |
 | `PROFILE_DESCRIPTION_KEY` | throwaway | **its own** random 32-byte base64 key | **its own** key, backed up separately |
 
-Rules: never reuse a key across environments; never give the Preview environment a production value; keep
-privileged keys out of source control, Linear and chat. In Vercel, set each variable for the **Preview** scope only
-to the staging value, and confirm Production holds different values.
+Do not reuse keys across environments. A privileged Supabase key is not needed by the current mock app or the
+Preview check below. Add one only when server-side integration requires it and its key format is verified.
+Supabase recommends `sb_secret_...` keys for new server-side integrations; keep them out of clients and chat.
 
-Check: open a preview, then in the staging dashboard confirm new anonymous users appear there and not in
-production; and confirm the Preview environment lists no production ref (`grep` the project URL in Vercel settings).
+### Verify a Preview connection
+
+The feed still uses mock data. To test the deployed runtime without a privileged key:
+
+1. Set `ENABLE_STAGING_CHECK=true` in Vercel for **Preview**, scoped to the test branch only, then redeploy it.
+2. Open `https://<preview-host>/api/staging-check`. `{"ok":true}` means the runtime read the two approved
+   fictional fixtures and did not see the draft through the public API. A 503 means configuration is missing or
+   not the expected staging project; a 502 means the request or fixture check failed.
+3. Remove the branch-specific flag and redeploy when finished. The endpoint returns 404 unless explicitly enabled
+   on Preview, and refuses all other Supabase project URLs. A ready page or a standalone `verify-live` is not
+   proof that the Vercel runtime uses staging.
+
+This check is public when enabled, returns no story content or credentials, and is not a replacement for the
+authenticated `verify-live` or SQL isolation checks. It is pinned to the project ref and fixture IDs in this guide.
 
 ## Seeding real testimonies
 
@@ -102,14 +112,13 @@ Never copy real user profiles, personal descriptions or production user data int
 ## Recovery
 
 - Wrong migration applied: do not reset. Write a new forward migration, test it locally, apply it with `migrate`.
-- Project paused or unreachable: unpause in the dashboard, then `status`-check with a dry-run `migrate`.
+- Project paused or unreachable: unpause in the dashboard, then run `status` against the project.
 - Staging data is disposable. If it must be rebuilt, create a new staging project, rerun `migrate --apply`,
   `seed-synthetic --apply`, `verify`, `verify-live`, update the ref above and the Vercel Preview variables.
 - Lost `PROFILE_DESCRIPTION_KEY` (staging): stored descriptions are unrecoverable; delete the ciphertext rows.
 
 ## To finish MUY-46 (needs a person)
 
-1. Done: invitation accepted, token created, `migrate --apply`, `verify` and `seed-synthetic --apply` run.
-2. Enable anonymous sign-ins in the dashboard, then run `verify-live` (needs the project's public anon key).
-3. Set the Vercel Preview variables (table above) and check a preview reads staging.
-4. Real seed: blocked on MUY-43.
+1. Done: hosted migration, synthetic seed, SQL verification, anonymous sign-ins and `verify-live` were run.
+2. Check a new Vercel Preview reads staging with the steps above.
+3. Real seed: blocked on MUY-43.

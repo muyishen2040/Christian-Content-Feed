@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Manage the hosted STAGING Supabase project through the Management API (HTTPS only).
 
-Commands (dry run unless --apply is given, where a command writes):
+Commands (migrate and seed-synthetic are dry runs unless --apply is given):
   status           show the target project (name, region, status). Read-only.
   migrate          apply pending files from supabase/migrations in order, recording each one.
   verify           run the access-rule checks (isolation, approved-only metadata, migration guard).
                    They run inside one request that always rolls back, so nothing is kept.
   seed-synthetic   insert the fictional seed from supabase/seed/staging_synthetic.sql (idempotent).
-  verify-live      with the project's anon key, sign in anonymously and check what the REST API shows.
+  verify-live      sign in anonymously and check the REST API; creates a staging user.
 
-Safety rules, all enforced before any request that writes:
+Safety rules:
 - The access token comes only from SUPABASE_ACCESS_TOKEN. It is never printed or logged.
-- The target project's real name must contain "staging", its ref must not be in PRODUCTION_PROJECT_REFS
-  (comma separated, optional), and --confirm-name must equal the project name exactly.
+- The target project's name must contain "staging" and its ref must not be in PRODUCTION_PROJECT_REFS.
+  Migration, seed and SQL verification also require the exact --confirm-name.
 - There is no reset, drop or truncate command. `migrate` only appends unapplied migrations.
-- Only the project's public anon key is ever read (for verify-live); privileged keys are never fetched.
+- verify-live requires a supplied public key; it never fetches keys from the Management API.
 
 Standard library only. The token needs the permission to read the project and run database queries.
 """
@@ -22,6 +22,8 @@ Standard library only. The token needs the permission to read the project and ru
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import json
 import os
 import re
@@ -39,6 +41,8 @@ API = "https://api.supabase.com"
 SENTINEL = "VERIFY_OK"
 _REF = re.compile(r"^[a-z]{20}$")
 _MIGRATION_FILE = re.compile(r"^(\d{14})_([a-z0-9_]+)\.sql$")
+_APPROVED_FIXTURES = {"00000000-0000-4000-8000-0000000000f1", "00000000-0000-4000-8000-0000000000f2"}
+_DRAFT_FIXTURE = "00000000-0000-4000-8000-0000000000f3"
 
 
 class StagingError(Exception):
@@ -78,6 +82,21 @@ class Api:
 
 def _scrub(text: str, secret: str) -> str:
     return text.replace(secret, "[redacted]") if secret else text
+
+
+def public_api_key(key: str | None) -> str:
+    if not key:
+        raise StagingError("no public key: pass --anon-key or set SUPABASE_ANON_KEY")
+    if key.startswith("sb_publishable_") and len(key) > len("sb_publishable_"):
+        return key
+    try:
+        _, payload, _ = key.split(".")
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        if isinstance(claims, dict) and claims.get("role") == "anon":
+            return key
+    except (ValueError, UnicodeDecodeError, binascii.Error):
+        pass
+    raise StagingError("invalid or secret key: provide a public publishable key or legacy anon key")
 
 
 # ---------- guards ----------
@@ -240,13 +259,8 @@ def cmd_seed(run_sql, apply: bool, log=print) -> None:
 def cmd_verify_live(api: Api, ref: str, log=print, request: Callable[..., object] | None = None,
                     anon_key: str | None = None) -> None:
     """Anonymous sign-in plus REST reads with the public anon key. Never uses privileged keys.
-    The anon key comes from --anon-key / SUPABASE_ANON_KEY, or from the API if the token may read keys."""
-    anon = anon_key
-    if not anon:
-        keys = api.call("GET", f"/v1/projects/{ref}/api-keys") or []
-        anon = next((k["api_key"] for k in keys if k.get("name") == "anon"), None)
-    if not anon:
-        raise StagingError("no anon key: pass --anon-key (the public key from the dashboard) or set SUPABASE_ANON_KEY")
+    The public key must be passed explicitly; the all-keys endpoint is never read."""
+    anon = public_api_key(anon_key)
     base = f"https://{ref}.supabase.co"
     http = request or Api(anon)._http
     h = {"apikey": anon}
@@ -254,10 +268,16 @@ def cmd_verify_live(api: Api, ref: str, log=print, request: Callable[..., object
     if not session or not session.get("access_token"):
         raise StagingError("anonymous sign-in failed; run enable-anonymous-auth in the dashboard first")
     user_h = {"apikey": anon, "Authorization": f"Bearer {session['access_token']}"}
-    rows = http("GET", base + "/rest/v1/published_testimonies?select=id,title", None, user_h)
-    seeded = [r for r in rows or [] if str(r.get("title", "")).startswith("[SYNTHETIC]")]
-    if not seeded:
-        raise StagingError("no approved synthetic testimony visible; run seed-synthetic first")
+    fixture_ids = ",".join(sorted(_APPROVED_FIXTURES | {_DRAFT_FIXTURE}))
+    rows = http("GET", base + f"/rest/v1/published_testimonies?select=id&id=in.({fixture_ids})", None, user_h)
+    visible = {str(r.get("id", "")) for r in rows or []}
+    if _DRAFT_FIXTURE in visible:
+        raise StagingError("synthetic draft is visible to an anonymous user")
+    if not _APPROVED_FIXTURES.issubset(visible):
+        raise StagingError("approved synthetic fixtures missing; run seed-synthetic first")
+    draft = http("GET", base + f"/rest/v1/testimonies?select=id&id=eq.{_DRAFT_FIXTURE}", None, user_h)
+    if not isinstance(draft, list) or draft:
+        raise StagingError("synthetic draft may be visible in the testimonies table")
     for table, col in (("testimonies", "body"), ("sources", "private_import_notes"), ("user_profiles", "description_ciphertext")):
         try:
             leaked = http("GET", f"{base}/rest/v1/{table}?select={col}&limit=1", None, user_h)
@@ -270,7 +290,7 @@ def cmd_verify_live(api: Api, ref: str, log=print, request: Callable[..., object
         mine = http("GET", f"{base}/rest/v1/{table}?select=user_id", None, user_h)
         if mine:
             raise StagingError(f"new anonymous user sees existing rows in {table}")
-    log(f"PASS live: anonymous user sees {len(seeded)} approved synthetic record(s), no private columns, no other users' rows")
+    log("PASS live: approved fixtures visible, draft hidden, no private columns or existing user rows visible")
 
 
 # ---------- CLI ----------
@@ -298,9 +318,7 @@ def main(argv: list[str] | None = None, api: Api | None = None) -> int:
         elif args.command == "seed-synthetic":
             cmd_seed(run_sql, args.apply)
         elif args.command == "verify-live":
-            anon = args.anon_key or os.environ.get("SUPABASE_ANON_KEY")
-            if anon and (anon.startswith("sb_secret_") or "service_role" in anon):
-                raise StagingError("that looks like a secret key; verify-live only takes the public anon key")
+            anon = public_api_key(args.anon_key or os.environ.get("SUPABASE_ANON_KEY"))
             cmd_verify_live(api, args.project_ref, anon_key=anon)
     except StagingError as exc:
         print(f"REFUSED/FAILED: {exc}", file=sys.stderr)
