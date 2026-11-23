@@ -60,9 +60,20 @@ Verified (2026-11-23) on a local `supabase/postgres:17` container with the tool'
 applies nothing, seed twice, `verify` passes with the seed present and leaves no rows; granting `anon` read of
 `testimonies.body` makes `verify` fail. The unit tests (`pipeline/tests/test_staging_db.py`) cover the guards.
 
-**Not yet run against the hosted project.** That needs a person's token (see "To finish"). In particular the
-assumption that the Management API runs one request as one transaction is unproven until the first hosted
-`verify`; if it fails oddly, run `supabase/tests/rls.sql` through `psql` against the project's database URL instead.
+Verified on the hosted staging project (2026-11-23, run by Mu An with a project-scoped token): `migrate --apply`
+applied all 3 migrations, `verify` passed all three checks and left no rows behind (so the Management API does run
+one request as one transaction), and `seed-synthetic --apply` loaded the fictional seed. Not yet run:
+`verify-live` (needs anonymous sign-ins enabled and the project's anon key).
+
+macOS note: the python.org Python has no CA bundle, so HTTPS fails with `URLError`. Prefix commands with
+`SSL_CERT_FILE=/etc/ssl/cert.pem`, or run "Install Certificates.command" once. Never disable certificate checks.
+
+## Access token
+
+Create it at Supabase > Account > Access Tokens, scoped to **Project**, organization "Shen's", only
+`christian-content-feed-staging`, expiry 7 days, with exactly two permissions: **Project Settings: Read** and
+**Database: Read-write**. Everything else stays None. Set it only in your own terminal
+(`export SUPABASE_ACCESS_TOKEN=...`), never in chat, Linear or git, and delete the token when finished.
 
 ## Environment separation
 
@@ -96,7 +107,7 @@ Never copy real user profiles, personal descriptions or production user data int
 
 ## To finish MUY-46 (needs a person)
 
-1. Accept the Supabase organization invitation; create a short-lived access token (Account > Access Tokens).
-2. Run `migrate --apply`, `verify`, `seed-synthetic --apply`, enable anonymous sign-ins, run `verify-live`.
+1. Done: invitation accepted, token created, `migrate --apply`, `verify` and `seed-synthetic --apply` run.
+2. Enable anonymous sign-ins in the dashboard, then run `verify-live` (needs the project's public anon key).
 3. Set the Vercel Preview variables (table above) and check a preview reads staging.
 4. Real seed: blocked on MUY-43.
