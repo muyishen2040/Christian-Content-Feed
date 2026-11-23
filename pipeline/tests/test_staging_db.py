@@ -1,4 +1,5 @@
 import json
+import base64
 import sys
 from pathlib import Path
 
@@ -240,16 +241,13 @@ def live_http(rows_by_path, signup_ok=True):
     return http
 
 
-class KeyApi(FakeApi):
-    def call(self, method, path, body=None):
-        if path.endswith("/api-keys"):
-            return [{"name": "anon", "api_key": "public-anon"}, {"name": "service_role", "api_key": "NEVER"}]
-        return super().call(method, path, body)
-
-
 GOOD = {
-    "published_testimonies": [{"id": "1", "title": "[SYNTHETIC] one"}],
+    "published_testimonies": [
+        {"id": "00000000-0000-4000-8000-0000000000f1", "title": "[SYNTHETIC] one"},
+        {"id": "00000000-0000-4000-8000-0000000000f2", "title": "[SYNTHETIC] two"},
+    ],
     "testimonies?select=body": sdb.StagingError("HTTP 401: permission denied"),
+    "testimonies?select=id": [],
     "sources?select": sdb.StagingError("HTTP 403: permission denied"),
     "user_profiles?select": sdb.StagingError("HTTP 401: permission denied"),
     "feedback": [], "saved_testimonies": [], "feed_events": [],
@@ -258,23 +256,23 @@ GOOD = {
 
 def test_live_check_passes_when_only_approved_synthetic_data_is_visible():
     logs = []
-    sdb.cmd_verify_live(KeyApi(), REF, log=logs.append, request=live_http(GOOD))
+    sdb.cmd_verify_live(FakeApi(), REF, log=logs.append, request=live_http(GOOD), anon_key="sb_publishable_test")
     assert logs and logs[0].startswith("PASS live")
 
 
 def test_live_check_fails_when_a_private_column_is_readable():
     leaky = {**GOOD, "testimonies?select=body": [{"body": "x"}]}
     with pytest.raises(sdb.StagingError, match="testimonies.body"):
-        sdb.cmd_verify_live(KeyApi(), REF, request=live_http(leaky))
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http(leaky), anon_key="sb_publishable_test")
 
 
 def test_live_check_fails_when_a_new_user_sees_other_users_rows_or_no_seed():
     with pytest.raises(sdb.StagingError, match="feedback"):
-        sdb.cmd_verify_live(KeyApi(), REF, request=live_http({**GOOD, "feedback": [{"user_id": "u"}]}))
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http({**GOOD, "feedback": [{"user_id": "u"}]}), anon_key="sb_publishable_test")
     with pytest.raises(sdb.StagingError, match="seed-synthetic"):
-        sdb.cmd_verify_live(KeyApi(), REF, request=live_http({**GOOD, "published_testimonies": []}))
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http({**GOOD, "published_testimonies": []}), anon_key="sb_publishable_test")
     with pytest.raises(sdb.StagingError, match="anonymous sign-in"):
-        sdb.cmd_verify_live(KeyApi(), REF, request=live_http(GOOD, signup_ok=False))
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http(GOOD, signup_ok=False), anon_key="sb_publishable_test")
 
 
 def test_live_check_can_take_the_anon_key_without_reading_keys_from_the_api():
@@ -283,16 +281,53 @@ def test_live_check_can_take_the_anon_key_without_reading_keys_from_the_api():
             assert not path.endswith("/api-keys"), "must not read keys when one is given"
             return super().call(method, path, body)
     logs = []
-    sdb.cmd_verify_live(NoKeysApi(), REF, log=logs.append, request=live_http(GOOD), anon_key="public-anon")
+    sdb.cmd_verify_live(NoKeysApi(), REF, log=logs.append, request=live_http(GOOD), anon_key="sb_publishable_test")
     assert logs[0].startswith("PASS live")
 
 
 def test_live_check_refuses_a_secret_looking_key_and_requires_some_key(capsys):
-    api = KeyApi()
+    api = FakeApi()
     assert sdb.main(["verify-live", "--project-ref", REF, "--anon-key", "sb_secret_abc"], api=api) == 2
     assert "secret key" in capsys.readouterr().err
     class NoKeysAllowed(FakeApi):
         def call(self, method, path, body=None):
-            return [] if path.endswith("/api-keys") else super().call(method, path, body)
+            assert not path.endswith("/api-keys"), "must not retrieve privileged API keys"
+            return super().call(method, path, body)
     with pytest.raises(sdb.StagingError, match="--anon-key"):
         sdb.cmd_verify_live(NoKeysAllowed(), REF, request=live_http(GOOD))
+
+
+def test_live_check_rejects_visible_draft():
+    draft = {"id": "00000000-0000-4000-8000-0000000000f3", "title": "[SYNTHETIC] draft"}
+    leaked = {**GOOD, "published_testimonies": [*GOOD["published_testimonies"], draft]}
+    with pytest.raises(sdb.StagingError, match="draft"):
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http(leaked), anon_key="sb_publishable_test")
+
+
+def test_live_check_rejects_draft_visible_in_underlying_table():
+    leaked = {**GOOD, "testimonies?select=id": [{"id": "00000000-0000-4000-8000-0000000000f3"}]}
+    with pytest.raises(sdb.StagingError, match="draft"):
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http(leaked), anon_key="sb_publishable_test")
+
+
+def test_live_check_requires_both_approved_fixtures():
+    incomplete = {**GOOD, "published_testimonies": GOOD["published_testimonies"][:1]}
+    with pytest.raises(sdb.StagingError, match="seed-synthetic"):
+        sdb.cmd_verify_live(FakeApi(), REF, request=live_http(incomplete), anon_key="sb_publishable_test")
+
+
+def test_live_check_rejects_legacy_service_role_jwt_before_any_request(capsys, monkeypatch):
+    payload = base64.urlsafe_b64encode(json.dumps({"role": "service_role"}).encode()).decode().rstrip("=")
+    key = f"header.{payload}.signature"
+    monkeypatch.setattr(sdb, "cmd_verify_live", lambda *args, **kwargs: pytest.fail("secret reached live check"))
+    assert sdb.main(["verify-live", "--project-ref", REF, "--anon-key", key], api=FakeApi()) == 2
+    assert "secret key" in capsys.readouterr().err
+
+
+def test_public_key_accepts_legacy_anon_jwt_and_rejects_malformed_keys():
+    payload = base64.urlsafe_b64encode(json.dumps({"role": "anon"}).encode()).decode().rstrip("=")
+    key = f"header.{payload}.signature"
+    assert sdb.public_api_key(key) == key
+    for invalid in ("sb_secret_secret", "header.invalid.signature", "sb_publishable_"):
+        with pytest.raises(sdb.StagingError, match="secret key"):
+            sdb.public_api_key(invalid)
