@@ -14,7 +14,7 @@ Each candidate contains a title, publisher/source name, original URL, a short dr
 - [ ] **Source suitability:** Confirm the publisher and original author or rights holder where necessary. Exclude the sources specified by the current dataset criteria (真耶穌教會 and 全能神).
 - [ ] **Content safety:** Evaluate the article for self-harm, abuse, or other sensitive content requiring exclusion or additional handling. Do not equate an absence of machine-detected terms with a completed editorial review.
 - [ ] **Synopsis:** Check the draft summary against the original page for accuracy, concision, and unnecessary personal or health details. Ensure any published synopsis is permitted under applicable rights and policies.
-- [ ] **Rights:** Confirm the permissions needed for linking, reproducing titles/summaries, thumbnail use, and any embedding. Record the evidence or decision in the repository or a traceable rights register. When terms are uncertain, leave the record unpublished.
+- [ ] **Rights:** Confirm permissions for extraction and raw-text storage, linking, titles/summaries, full-text display, thumbnails, and embeddings as applicable. Record each decision and its evidence in a traceable rights register. Do not store full text before its storage permission is confirmed; leave records unpublished when display rights are uncertain.
 - [ ] **Publication decision:** Set the record's `review` fields (`reviewer`, `decision`, `reason`, `reviewed_on`) with a substantive explanation and supporting link or evidence. Do not mark the fixture as publishable until all required checks have passed.
 
 ### Candidate-specific concerns
@@ -36,7 +36,7 @@ All source URLs and existing notes live in `approved_sample.json`. The table her
 
 ## Open publication decisions
 
-1. **Summaries versus link-outs:** Linking to another page is different from reproducing parts of that page. Determine what text can be displayed on the app's cards and preserve evidence of the decision.
+1. **Text and summaries:** Linking, storing raw text, displaying a full article, and creating embeddings are separate uses. Determine which uses are allowed and preserve evidence for each.
 2. **No-derivatives or noncommercial terms:** Do not assume a generated or rewritten summary is permitted under a CC BY-NC-ND notice. Resolve and record the applicable terms before use.
 3. **User-submitted testimonies:** Publisher hosting does not necessarily prove publisher ownership or licensing authority. Confirm who can authorize reuse, or leave the candidate out.
 4. **Images:** Use independently licensed editorial illustrations or images for which the project has explicit display permission. Never imply that a stock image portrays the actual testimony author or event.

@@ -39,7 +39,8 @@ Force-push or rewrite shared history; approve PRs; contact publishers; make the 
 
 ## Content and safety rules
 
-- Link-out model: store title, source, original URL, our own summary and tags. Never store article body text or author names, and never log raw personal descriptions.
+- Store original testimony text when the rights holder has permitted storage for the intended use. Preserve source attribution and the original URL; do not create separate author-name fields unless separately authorized and needed. Review any names or other personal details present in raw text, and keep it out of public fixtures and logs. Never log raw personal descriptions.
+- Keep original extracted text unchanged for review. Do not overwrite it with OCR corrections or formatted text; separate raw and processed storage requires a schema and pipeline change. The current `testimonies.body` column is private and does not make full text available to the app.
 - A testimony is a first-person story about God's work in the writer's life. Reject sermons, news and announcements, anything crisis-adjacent (route to human review), and sources from 真耶穌教會 or 全能神.
 - Public availability or a permissive robots.txt is not permission. Rights stay `pending` until a person decides. Respect robots.txt rules that block AI crawlers.
 - Prefer text pages with their own URL. Check each candidate for crisis keywords before using it.
