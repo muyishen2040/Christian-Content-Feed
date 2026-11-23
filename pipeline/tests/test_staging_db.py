@@ -275,3 +275,24 @@ def test_live_check_fails_when_a_new_user_sees_other_users_rows_or_no_seed():
         sdb.cmd_verify_live(KeyApi(), REF, request=live_http({**GOOD, "published_testimonies": []}))
     with pytest.raises(sdb.StagingError, match="anonymous sign-in"):
         sdb.cmd_verify_live(KeyApi(), REF, request=live_http(GOOD, signup_ok=False))
+
+
+def test_live_check_can_take_the_anon_key_without_reading_keys_from_the_api():
+    class NoKeysApi(FakeApi):
+        def call(self, method, path, body=None):
+            assert not path.endswith("/api-keys"), "must not read keys when one is given"
+            return super().call(method, path, body)
+    logs = []
+    sdb.cmd_verify_live(NoKeysApi(), REF, log=logs.append, request=live_http(GOOD), anon_key="public-anon")
+    assert logs[0].startswith("PASS live")
+
+
+def test_live_check_refuses_a_secret_looking_key_and_requires_some_key(capsys):
+    api = KeyApi()
+    assert sdb.main(["verify-live", "--project-ref", REF, "--anon-key", "sb_secret_abc"], api=api) == 2
+    assert "secret key" in capsys.readouterr().err
+    class NoKeysAllowed(FakeApi):
+        def call(self, method, path, body=None):
+            return [] if path.endswith("/api-keys") else super().call(method, path, body)
+    with pytest.raises(sdb.StagingError, match="--anon-key"):
+        sdb.cmd_verify_live(NoKeysAllowed(), REF, request=live_http(GOOD))

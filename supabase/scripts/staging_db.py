@@ -237,12 +237,16 @@ def cmd_seed(run_sql, apply: bool, log=print) -> None:
     log("synthetic seed applied (idempotent: reruns change nothing)")
 
 
-def cmd_verify_live(api: Api, ref: str, log=print, request: Callable[..., object] | None = None) -> None:
-    """Anonymous sign-in plus REST reads with the public anon key. Never uses privileged keys."""
-    keys = api.call("GET", f"/v1/projects/{ref}/api-keys") or []
-    anon = next((k["api_key"] for k in keys if k.get("name") == "anon"), None)
+def cmd_verify_live(api: Api, ref: str, log=print, request: Callable[..., object] | None = None,
+                    anon_key: str | None = None) -> None:
+    """Anonymous sign-in plus REST reads with the public anon key. Never uses privileged keys.
+    The anon key comes from --anon-key / SUPABASE_ANON_KEY, or from the API if the token may read keys."""
+    anon = anon_key
     if not anon:
-        raise StagingError("no anon key found for this project")
+        keys = api.call("GET", f"/v1/projects/{ref}/api-keys") or []
+        anon = next((k["api_key"] for k in keys if k.get("name") == "anon"), None)
+    if not anon:
+        raise StagingError("no anon key: pass --anon-key (the public key from the dashboard) or set SUPABASE_ANON_KEY")
     base = f"https://{ref}.supabase.co"
     http = request or Api(anon)._http
     h = {"apikey": anon}
@@ -277,6 +281,7 @@ def main(argv: list[str] | None = None, api: Api | None = None) -> int:
     ap.add_argument("--project-ref", required=True, help="20-letter project ref of the staging project")
     ap.add_argument("--confirm-name", help="exact project name; required with --apply and for verify")
     ap.add_argument("--apply", action="store_true", help="actually write (migrate, seed-synthetic)")
+    ap.add_argument("--anon-key", help="the project's PUBLIC anon/publishable key, for verify-live (never a secret key)")
     args = ap.parse_args(argv)
 
     writes = (args.command in {"migrate", "seed-synthetic"} and args.apply) or args.command == "verify"
@@ -293,7 +298,10 @@ def main(argv: list[str] | None = None, api: Api | None = None) -> int:
         elif args.command == "seed-synthetic":
             cmd_seed(run_sql, args.apply)
         elif args.command == "verify-live":
-            cmd_verify_live(api, args.project_ref)
+            anon = args.anon_key or os.environ.get("SUPABASE_ANON_KEY")
+            if anon and (anon.startswith("sb_secret_") or "service_role" in anon):
+                raise StagingError("that looks like a secret key; verify-live only takes the public anon key")
+            cmd_verify_live(api, args.project_ref, anon_key=anon)
     except StagingError as exc:
         print(f"REFUSED/FAILED: {exc}", file=sys.stderr)
         return 2

@@ -29,7 +29,7 @@ python3 supabase/scripts/staging_db.py migrate --project-ref $REF               
 python3 supabase/scripts/staging_db.py migrate --project-ref $REF --apply --confirm-name $NAME
 python3 supabase/scripts/staging_db.py verify --project-ref $REF --confirm-name $NAME
 python3 supabase/scripts/staging_db.py seed-synthetic --project-ref $REF --apply --confirm-name $NAME
-python3 supabase/scripts/staging_db.py verify-live --project-ref $REF
+python3 supabase/scripts/staging_db.py verify-live --project-ref $REF --anon-key <public publishable key>
 ```
 
 Guards, all checked before any write: the project's real name must contain `staging`; its ref must not be in
@@ -62,8 +62,10 @@ applies nothing, seed twice, `verify` passes with the seed present and leaves no
 
 Verified on the hosted staging project (2026-11-23, run by Mu An with a project-scoped token): `migrate --apply`
 applied all 3 migrations, `verify` passed all three checks and left no rows behind (so the Management API does run
-one request as one transaction), and `seed-synthetic --apply` loaded the fictional seed. Not yet run:
-`verify-live` (needs anonymous sign-ins enabled and the project's anon key).
+one request as one transaction), and `seed-synthetic --apply` loaded the fictional seed. Anonymous sign-ins were enabled in the dashboard
+(Authentication > Sign In / Providers) on the same day. `verify-live` takes the project's PUBLIC publishable key
+(`sb_publishable_...`, Project Settings > API Keys) with `--anon-key` or `SUPABASE_ANON_KEY`; it refuses a secret-looking key.
+Supabase recommends adding a CAPTCHA before anonymous sign-ins go to real users (production, not staging).
 
 macOS note: the python.org Python has no CA bundle, so HTTPS fails with `URLError`. Prefix commands with
 `SSL_CERT_FILE=/etc/ssl/cert.pem`, or run "Install Certificates.command" once. Never disable certificate checks.
