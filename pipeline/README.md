@@ -2,6 +2,20 @@
 
 Source-specific importers for approved sources. They produce JSON batches shaped like the Supabase `sources` and `testimonies` tables (MUY-12). Importers never write to a database and never publish anything (`loader.py` is the only writer, see below): every row is `review_status = pending`, `rights_status = pending`, `publication_status = draft`.
 
+## Testimony text
+
+Keep the original article text for review and downstream processing. Preserve source attribution, the original URL and review status. Keep full text in private working files or a restricted database, and out of Git, public fixtures and logs.
+
+The current schema has one nullable `testimonies.body` text column, which can hold the original extracted text. For the future schema, consider a separate `processed_body` column for cleaned and formatted text. Keep `body` unchanged so the processed version can be compared with the original. The new column needs a schema and pipeline change; it does not exist yet.
+
+The public `published_testimonies` view exposes metadata only, not `body`. Full-text reading requires a separately reviewed API and UI. This guidance does not modify the database, importers or app.
+
+## Work boundaries
+
+[MUY-16](https://linear.app/muyishen4020/issue/MUY-16) covers the metadata loader and its staging verification. [MUY-50](https://linear.app/muyishen4020/issue/MUY-50) adds metadata-only discovery for 水深之處 and 東湖禮拜堂. Its title and description filters do not replace full-article or human review; imported candidates remain unpublished drafts.
+
+[MUY-51](https://linear.app/muyishen4020/issue/MUY-51) covers extracting and preserving permitted HTML article text, safe enrichment of existing drafts, and content-based review. [MUY-49](https://linear.app/muyishen4020/issue/MUY-49) covers Canaan PDF/OCR. Coordinate shared normalization and tagging with [MUY-17](https://linear.app/muyishen4020/issue/MUY-17).
+
 ## Importers
 
 ### `importers/canaan_magazine.py` — 迦南會北部大專團契・靈友雙月刊
@@ -27,7 +41,7 @@ Each row maps like this:
 | `content_hash` | sha256 of source, issue, page and normalized title (stable between runs) |
 | `title` | article title as written in the catalog |
 | `excerpt` | bibliographic line only: issue, date and page. A person must replace it with our own summary |
-| `body` | always null |
+| `body` | always null in this catalog-only importer; it does not extract PDF text |
 | `source_name` | 迦南會北部大專團契・靈友雙月刊 |
 | `source_url` | the article's own PDF link on Dropbox |
 | `topics` | empty |
@@ -118,6 +132,8 @@ Run against the staging project from MUY-46 after its migrations are applied. Us
 6. Record the date, counts and result in the MUY-16 ticket. Do not record keys.
 
 Not yet written: our own summaries and topic tags, and OCR for the Canaan PDFs (MUY-49).
+
+Article-text extraction and enrichment are follow-up work and are not part of the loader.
 
 ## Tests
 

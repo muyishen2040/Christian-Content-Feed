@@ -254,3 +254,10 @@ def test_rest_store_sends_expected_requests_and_never_leaks_error_bodies(monkeyp
     assert "409" in str(err.value) and "secret title" not in str(err.value)
     assert seen[0][1].startswith("https://x.supabase.co/rest/v1/sources?")
     assert seen[-1][2] == "return=minimal"
+
+
+def test_dry_run_log_says_it_did_not_check_the_database():
+    dry = json.loads(run(sample_batch(), FakeStore()).log_line())
+    assert dry["database_checked"] is False and "upper bound" in dry["note"]
+    applied = json.loads(run(sample_batch(), FakeStore(), apply=True).log_line())
+    assert "database_checked" not in applied

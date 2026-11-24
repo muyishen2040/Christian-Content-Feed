@@ -35,5 +35,15 @@ jobs:
           PGPASSWORD=postgres psql -X -v ON_ERROR_STOP=1 \
             -h 127.0.0.1 -p 54322 -U postgres -d postgres \
             -f supabase/tests/profile_migration_guard.sql
+      - name: Staging seed is idempotent and does not disturb the access tests
+        run: |
+          for i in 1 2; do
+            PGPASSWORD=postgres psql -X -v ON_ERROR_STOP=1 \
+              -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+              -f supabase/seed/staging_synthetic.sql
+          done
+          PGPASSWORD=postgres psql -X -v ON_ERROR_STOP=1 \
+            -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -f supabase/tests/rls.sql
       - name: Re-apply clean migration history
         run: supabase db reset

@@ -70,8 +70,18 @@ class LoadResult:
 
     def log_line(self) -> str:
         """One structured, non-personal log line."""
+        extra = (
+            {
+                "database_checked": False,
+                "note": "dry run does not read the database: would_insert is an upper bound and "
+                "may include stories that already exist (they are skipped on --apply)",
+            }
+            if self.dry_run
+            else {}
+        )
         return json.dumps(
             {
+                **extra,
                 "job": "testimony_load",
                 "source_key": self.source_key,
                 "dry_run": self.dry_run,
