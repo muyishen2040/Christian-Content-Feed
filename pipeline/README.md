@@ -2,15 +2,13 @@
 
 Source-specific importers for approved sources. They produce JSON batches shaped like the Supabase `sources` and `testimonies` tables (MUY-12). They never write to a database and never publish anything: every row is `review_status = pending`, `rights_status = pending`, `publication_status = draft`.
 
-## Testimony text and rights
+## Testimony text
 
-The product needs the original article text for review and downstream processing. Store raw text only after a person records permission for that storage and its intended use; a public page or permissive robots.txt is not a license. Review permissions separately for extraction, storage, display, and embeddings, including any privacy or author-consent requirements. A draft status alone is not permission to store the text.
+Keep the original article text for review and downstream processing. Preserve source attribution, the original URL and review status. Keep full text in private working files or a restricted database, and out of Git, public fixtures and logs.
 
-Record the source name, original URL, permission decision and review status alongside each candidate. Keep raw text in private working files or a suitably restricted database, and out of Git, public fixtures, and logs. Continue to leave unknown-rights items unpublished. Do not create separate author-name fields unless separately authorized and needed; review names and other personal details that already appear in the raw text.
+The current schema has one nullable `testimonies.body` text column, which can hold the original extracted text. For the future schema, consider a separate `processed_body` column for cleaned and formatted text. Keep `body` unchanged so the processed version can be compared with the original. The new column needs a schema and pipeline change; it does not exist yet.
 
-The current schema has one nullable `testimonies.body` text column. It can hold the original extracted text when storage is authorized, but has no separate raw and processed fields. Preserve the original before making OCR corrections or formatting changes; a future schema and pipeline change must add separate storage before both versions can be kept in the database. Do not encode an invented JSON structure into `body`.
-
-The public `published_testimonies` view exposes metadata only, not `body`. An approved article cannot yet be read in full through the app; displaying it requires a separately reviewed API and UI with access controls and display rights. This policy change does not modify the database, importers, or app.
+The public `published_testimonies` view exposes metadata only, not `body`. Full-text reading requires a separately reviewed API and UI. This guidance does not modify the database, importers or app.
 
 ## Work boundaries
 
@@ -55,7 +53,7 @@ Limits to know about:
 - Author names are discarded and never stored.
 - The catalog has no usable category, so it cannot tell testimonies from other articles. `import_hint` (`maybe_testimony` or `unlikely`) is a keyword guess from the title that a person must check by reading the article. `import_hint` is not a table column; a loader drops it.
 - Articles are PDFs, not web text pages.
-- The source's rights are `pending`: no reuse terms or copyright notice were found and robots.txt returns 404. Confirm permission for storage before saving full text, and approve the relevant rights before publication or embeddings.
+- The source's rights are `pending`: no reuse terms or copyright notice were found and robots.txt returns 404. Approve the source's rights before anything is published.
 - Exact duplicate catalog rows (same issue, page and title) collapse to one row and are counted in `stats.exact_duplicates_skipped`.
 - A range that cannot be fetched (after 2 retries, one request per second) or that is not a catalog page (for example an HTTP 200 error page) is reported by number in `stats.failed_ranges`, the batch is marked `complete: false`, the other ranges still load, and the exit code is 1. A loader must refuse a batch that is not complete.
 

@@ -24,7 +24,7 @@
 | `saved_testimonies` | own saved set only; updates require a transactional backend |
 | `feed_events` | own impressions/events only |
 
-`testimonies.body` is a nullable, private text column that can hold authorized original article text. There is no separate database column for raw OCR and processed text; do not overwrite the raw text with corrections. Separate versions and a rights-aware full-text API need a future schema and implementation change. Confirm permission before storing or displaying the text.
+`testimonies.body` is a nullable, private text column that can hold original article text. There is no separate database column for processed text yet. A future `processed_body` column could hold the cleaned version without overwriting the original; this needs a schema and pipeline change. Full-text access through the app also needs a separate API.
 
 Supabase Auth anonymous sessions have a **signed-in `authenticated` JWT role** with `auth.uid()`. A bare Supabase `anon` project key has no owner ID and cannot read private profiles, feedback, Saved, or events. Never expose the service-role key to frontend or previews.
 

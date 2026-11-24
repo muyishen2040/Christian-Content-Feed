@@ -47,7 +47,7 @@ The story schema requires `sourceName` and, for any non-fictional record, a `sou
 
 Real record cards may display a source-provided thumbnail **only if** `thumbnailUrl` is HTTPS and `thumbnailApproved === true`. Missing or unapproved images render a stable text-first gradient card. The existing atmospheric Pexels photos apply **only to clearly fictional mock stories**.
 
-On the detail page, real records currently show the approved editorial summary and a link to the publisher. Full-text reading is not implemented. The product may display an article only after the necessary rights review and a separate rights-aware API and UI are implemented. Longer paragraphs in the repository are fictional and displayed only for mock stories.
+On the detail page, real records currently show the approved editorial summary and a link to the publisher. Full-text reading is not implemented and needs a separate API and UI. Longer paragraphs in the repository are fictional and displayed only for mock stories.
 
 These flags are not a legal approval process: a future content importer or administrator must record and verify the rights evidence that authorizes display. Access to a public web page alone does not grant redistribution rights.
 
