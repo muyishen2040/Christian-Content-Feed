@@ -230,3 +230,15 @@ test("GET /api/consent returns only the visitor's own flags", async () => {
   assert.deepEqual(await res.json(), { consent: PREFS });
   assert.deepEqual(calls.reads, [A]);
 });
+
+test("a temporary Auth failure never signs the visitor in again", async () => {
+  const flaky = deps({
+    getUser: async () => {
+      throw new Error("Auth check unavailable");
+    },
+  });
+  const res = await handleCreateSession(req("POST", "/api/session"), flaky.d);
+  assert.equal(res.status, 503);
+  assert.equal(flaky.calls.signIn, 0); // the existing identity is not replaced
+  assert.equal((await handleGetSession(flaky.d)).status, 503);
+});

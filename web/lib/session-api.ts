@@ -33,7 +33,11 @@ const unauthorized = () => error(401, "no_session", "No visitor session");
 /** GET /api/session: does this browser have a session? Never creates one, so ordinary visitors and
  * bots reading public content do not create Auth users. */
 export async function handleGetSession(deps: SessionDeps): Promise<Response> {
-  return json({ hasSession: (await deps.getUser()) !== null });
+  try {
+    return json({ hasSession: (await deps.getUser()) !== null });
+  } catch {
+    return error(503, "session_unavailable", "Try again later");
+  }
 }
 
 /** POST /api/session: create an anonymous session, only when the visitor takes an action that needs

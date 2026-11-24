@@ -1,7 +1,12 @@
 import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  isAuthRetryableFetchError,
+  isAuthSessionMissingError,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import {
   consentFromRow,
@@ -47,12 +52,29 @@ function adminClient(): SupabaseClient {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
+/** True for failures that say nothing about the visitor's session: network errors and 5xx/429. */
+function isTemporaryAuthError(error: {
+  status?: number;
+  name?: string;
+}): boolean {
+  if (isAuthRetryableFetchError(error)) return true;
+  const status = error.status;
+  if (status === undefined) return !isAuthSessionMissingError(error);
+  return status === 0 || status === 429 || status >= 500;
+}
+
 export function createSessionDeps(): SessionDeps {
   return {
     async getUser() {
       // getUser() asks the Auth server to verify the token; getSession() would trust the cookie.
       const { data, error } = await (await visitorClient()).auth.getUser();
-      return error || !data.user ? null : { id: data.user.id };
+      if (data.user) return { id: data.user.id };
+      // "No visitor session" is a normal answer. A temporary Auth failure is not: reporting it as
+      // "no session" would let the caller sign the visitor in again and replace their identity.
+      if (error && isTemporaryAuthError(error)) {
+        throw new Error("Auth check unavailable");
+      }
+      return null;
     },
     async signInAnonymously() {
       const { data, error } = await (

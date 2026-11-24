@@ -60,6 +60,10 @@ other websites from doing this in a visitor's browser but not a script that sets
 per-IP rate limits to anonymous sign-ins, and recommends a CAPTCHA. Turn on CAPTCHA protection (Auth > Bot and Abuse
 Protection) before real users, and monitor Auth user counts on the Free plan.
 
+**Do not enable CAPTCHA yet.** `signInAnonymously()` in `web/lib/supabase-server.ts` does not send a CAPTCHA token,
+so with CAPTCHA on every new anonymous sign-in would fail. Adding token support (the client widget, passing
+`options.captchaToken`, and tests) is follow-up work that must land before CAPTCHA is turned on for the pilot.
+
 ## Configuration
 
 Server environment (Preview must point at the staging project, see [staging-database.md](staging-database.md)):
