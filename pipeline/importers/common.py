@@ -47,13 +47,23 @@ _NOT_TESTIMONY = re.compile(r"查經|講道|主日信息|證道|公告|報名|�
 class FetchError(OSError):
     """A fetch failed. `status` is the HTTP status, or None for a network error. Safe to log."""
 
-    def __init__(self, message: str, status: int | None = None) -> None:
+    def __init__(self, message: str, status: int | None = None, code: str | None = None) -> None:
         super().__init__(message)
         self.status = status
+        self.code = code  # machine code from a JSON error body (for example a WordPress REST code), never the body
 
 
 class RobotsDisallowed(Exception):
     """robots.txt (for us or for an AI crawler) does not allow this URL. Never retried."""
+
+
+def _error_code(body: bytes) -> str | None:
+    """The short `code` field of a JSON error body, or None. Nothing else from the body is kept."""
+    try:
+        code = json.loads(body.decode("utf-8", errors="replace")).get("code")
+    except (ValueError, AttributeError):
+        return None
+    return code if isinstance(code, str) and len(code) <= 64 else None
 
 
 def http_get(url: str, timeout: float = 30.0) -> str:
@@ -62,8 +72,7 @@ def http_get(url: str, timeout: float = 30.0) -> str:
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (https URLs only, checked by Fetcher)
             return resp.read().decode("utf-8", errors="replace")
     except urllib.error.HTTPError as exc:
-        exc.read()
-        raise FetchError(f"HTTP {exc.code}", exc.code) from None
+        raise FetchError(f"HTTP {exc.code}", exc.code, _error_code(exc.read(65536))) from None
     except OSError as exc:
         raise FetchError(type(exc).__name__) from None
 

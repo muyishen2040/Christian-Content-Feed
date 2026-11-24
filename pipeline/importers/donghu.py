@@ -112,6 +112,9 @@ def build_batch(posts: list[dict], failures: list[dict] | None = None) -> dict:
     return {"source": to_source_row(), "testimonies": rows, "stats": stats}
 
 
+PAST_END_CODE = "rest_post_invalid_page_number"
+
+
 def fetch_posts(fetcher: Fetcher) -> tuple[list[dict], list[dict]]:
     """Fetch every post in the 見證分享 category, one bounded page at a time."""
     cat = category_id(fetcher.get(f"{API}/categories?" + urlencode({"search": CATEGORY_NAME, "_fields": "id,name"})))
@@ -122,7 +125,9 @@ def fetch_posts(fetcher: Fetcher) -> tuple[list[dict], list[dict]]:
         try:
             batch = parse_posts(fetcher.get(f"{API}/posts?{query}"))
         except FetchError as exc:
-            if exc.status == 400 and page > 1:  # WordPress answers 400 for a page past the last
+            # WordPress answers 400 `rest_post_invalid_page_number` for a page past the last. Any other
+            # 400 is a real failure and must leave the batch incomplete, not look like a clean end.
+            if exc.status == 400 and exc.code == PAST_END_CODE and page > 1:
                 return posts, []
             return posts, [{"item": f"donghu-page-{page}", "reason": f"fetch failed ({exc})"}]
         posts.extend(batch)

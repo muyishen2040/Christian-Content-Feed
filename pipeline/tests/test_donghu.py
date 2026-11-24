@@ -92,7 +92,7 @@ def fake_site(post_pages, robots="User-agent: *\nDisallow:\n"):
         assert q["_fields"] == ["id,link,title"] and q["categories"] == ["67"]  # no body is ever requested
         n = int(q["page"][0])
         if n > len(post_pages):
-            raise FetchError("HTTP 400", 400)
+            raise FetchError("HTTP 400", 400, donghu.PAST_END_CODE)
         return json.dumps(post_pages[n - 1])
 
     return Fetcher(get=get, delay=0, retries=0, sleep=lambda s: None), calls
@@ -143,3 +143,19 @@ def test_cli_reads_a_saved_file_and_exits_nonzero_for_an_incomplete_batch(tmp_pa
     bad = tmp_path / "bad.json"
     bad.write_text("not json", encoding="utf-8")
     assert donghu.main(["--from-file", str(bad)]) == 2
+
+
+def test_a_different_400_is_a_failure_not_the_end_of_the_import():
+    full = [post(i) for i in range(1, donghu.PER_PAGE + 1)]
+
+    def get(url):
+        if url.endswith("/robots.txt"):
+            return "User-agent: *\nDisallow:\n"
+        if "/categories" in url:
+            return CATEGORIES
+        if "&page=1&" in url:
+            return json.dumps(full)
+        raise FetchError("HTTP 400", 400, "rest_invalid_param")
+
+    posts, failures = donghu.fetch_posts(Fetcher(get=get, delay=0, retries=0, sleep=lambda s: None))
+    assert len(posts) == donghu.PER_PAGE and failures and failures[0]["item"] == "donghu-page-2"
