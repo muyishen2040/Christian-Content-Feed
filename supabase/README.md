@@ -8,7 +8,8 @@
    `psql -X -v ON_ERROR_STOP=1 "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/tests/rls.sql`.
    Tests wrap all synthetic fixtures in a transaction and roll back at the end.
 4. Rerun `supabase db reset` to verify a clean migration history. Only replay individual migration SQL in a disposable DB: rerunning the initial migration alone restores broader grants until later migrations are reapplied in order.
-5. Use a *separate staging Supabase project* for real staging migration checks. Never run `db reset --linked` or copy staging credentials into previews pointing to real pilot users.
+5. Hosted staging setup, checks and recovery are in [docs/staging-database.md](../docs/staging-database.md).
+6. Use a *separate staging Supabase project* for real staging migration checks. Never run `db reset --linked` or copy staging credentials into previews pointing to real pilot users.
 
 ## Schema
 
@@ -22,6 +23,8 @@
 | `feedback` | own event records only; `(user_id,request_id)` is idempotent |
 | `saved_testimonies` | own saved set only; updates require a transactional backend |
 | `feed_events` | own impressions/events only |
+
+`testimonies.body` is a nullable, private text column that can hold original article text. There is no separate database column for processed text yet. A future `processed_body` column could hold the cleaned version without overwriting the original; this needs a schema and pipeline change. Full-text access through the app also needs a separate API.
 
 Supabase Auth anonymous sessions have a **signed-in `authenticated` JWT role** with `auth.uid()`. A bare Supabase `anon` project key has no owner ID and cannot read private profiles, feedback, Saved, or events. Never expose the service-role key to frontend or previews.
 

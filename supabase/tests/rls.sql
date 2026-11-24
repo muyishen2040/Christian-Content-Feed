@@ -1,4 +1,5 @@
--- Integration tests for MUY-12. Run only against a disposable local Supabase DB.
+-- Integration tests for MUY-12. Run against a disposable local DB, or (via staging_db.py verify) the
+-- staging project: counts look only at this file's own fixture ids, so existing seed rows do not matter.
 -- psql -X -v ON_ERROR_STOP=1 "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/tests/rls.sql
 BEGIN;
 
@@ -53,7 +54,7 @@ VALUES
 SET LOCAL ROLE anon;
 DO $$
 BEGIN
- IF (SELECT count(*) FROM public.published_testimonies) <> 1
+ IF (SELECT count(*) FROM public.published_testimonies WHERE id IN ('00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000012')) <> 1
  THEN RAISE EXCEPTION 'anon must only read approved, published source-backed testimony'; END IF;
  BEGIN
    PERFORM body FROM public.testimonies;
@@ -78,7 +79,7 @@ SELECT set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1
 DO $$
 DECLARE n integer;
 BEGIN
- IF (SELECT count(*) FROM public.published_testimonies) <> 1
+ IF (SELECT count(*) FROM public.published_testimonies WHERE id IN ('00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000012')) <> 1
  THEN RAISE EXCEPTION 'authenticated user saw unapproved content'; END IF;
  BEGIN
    PERFORM body FROM public.testimonies;
@@ -183,7 +184,7 @@ RESET ROLE;
 SET LOCAL ROLE service_role;
 DO $$
 BEGIN
- IF (SELECT count(*) FROM public.published_testimonies) <> 1
+ IF (SELECT count(*) FROM public.published_testimonies WHERE id IN ('00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000012')) <> 1
  THEN RAISE EXCEPTION 'service role view must exclude drafts'; END IF;
  IF (SELECT description_ciphertext FROM public.user_profiles
      WHERE user_id = '00000000-0000-4000-8000-0000000000a1') <> decode('010203', 'hex')
@@ -198,14 +199,14 @@ WHERE id = '00000000-0000-4000-8000-000000000001';
 SET LOCAL ROLE anon;
 DO $$
 BEGIN
- IF (SELECT count(*) FROM public.published_testimonies) <> 0
+ IF (SELECT count(*) FROM public.published_testimonies WHERE id IN ('00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000012')) <> 0
  THEN RAISE EXCEPTION 'revoked source must not remain public'; END IF;
 END $$;
 RESET ROLE;
 SET LOCAL ROLE service_role;
 DO $$
 BEGIN
- IF (SELECT count(*) FROM public.published_testimonies) <> 0
+ IF (SELECT count(*) FROM public.published_testimonies WHERE id IN ('00000000-0000-4000-8000-000000000011','00000000-0000-4000-8000-000000000012')) <> 0
  THEN RAISE EXCEPTION 'service role view must exclude revoked sources'; END IF;
 END $$;
 RESET ROLE;
