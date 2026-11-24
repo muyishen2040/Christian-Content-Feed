@@ -34,10 +34,11 @@ VALUES
   'fixture-pending-12', 'Synthetic pending testimony', 'Do not expose',
   'Approved fictitious source', 'pending', 'pending', 'draft');
 
-INSERT INTO public.user_profiles (user_id, topics, description_ciphertext)
+INSERT INTO public.user_profiles
+ (user_id, consent_to_personalization, consent_keep_text, topics, description_ciphertext)
 VALUES
- ('00000000-0000-4000-8000-0000000000a1', ARRAY['fixture A'], decode('010203', 'hex')),
- ('00000000-0000-4000-8000-0000000000b2', ARRAY['fixture B'], decode('040506', 'hex'));
+ ('00000000-0000-4000-8000-0000000000a1', true, true, ARRAY['fixture A'], decode('010203', 'hex')),
+ ('00000000-0000-4000-8000-0000000000b2', true, true, ARRAY['fixture B'], decode('040506', 'hex'));
 INSERT INTO public.feedback (user_id, testimony_id, action, request_id)
 VALUES
  ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000011','save','00000000-0000-4000-8000-000000000091'),

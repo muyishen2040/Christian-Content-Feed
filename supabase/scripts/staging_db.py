@@ -8,6 +8,7 @@ Commands (migrate and seed-synthetic are dry runs unless --apply is given):
                    They run inside one request that always rolls back, so nothing is kept.
   seed-synthetic   insert the fictional seed from supabase/seed/staging_synthetic.sql (idempotent).
   verify-live      sign in anonymously and check the REST API; creates a staging user.
+  verify-isolation sign in two anonymous users; A writes rows, B must not see or change them (MUY-26).
 
 Safety rules:
 - The access token comes only from SUPABASE_ACCESS_TOKEN. It is never printed or logged.
@@ -236,12 +237,16 @@ def cmd_migrate(run_sql, apply: bool, directory: Path = MIGRATIONS, log=print) -
 def cmd_verify(run_sql, log=print) -> None:
     run_check(run_sql, rls_check_sql((TESTS / "rls.sql").read_text(encoding="utf-8")), "access rules (rls.sql)")
     log("PASS access rules: isolation, approved-only metadata, revoked sources, service role")
+    run_check(run_sql, rls_check_sql((TESTS / "consent.sql").read_text(encoding="utf-8")), "consent rules (consent.sql)")
+    log("PASS consent rules: no preference state or retained text without matching consent")
     guard = guard_check_sql((MIGRATIONS / "20261116050000_encrypt_profile_descriptions.sql").read_text(encoding="utf-8"))
     run_check(run_sql, guard, "plaintext migration guard")
     log("PASS migration guard: refuses to drop a plaintext description and preserves it")
     left = run_sql("SELECT count(*)::int AS n FROM auth.users WHERE id IN "
                    "('00000000-0000-4000-8000-0000000000a1','00000000-0000-4000-8000-0000000000b2',"
-                   "'00000000-0000-4000-8000-0000000000c3')")
+                   "'00000000-0000-4000-8000-0000000000c3','00000000-0000-4000-8000-0000000000d1',"
+                   "'00000000-0000-4000-8000-0000000000d2','00000000-0000-4000-8000-0000000000d3',"
+                   "'00000000-0000-4000-8000-0000000000d4')")
     if left and left[0]["n"] != 0:
         raise StagingError("verify left test users behind: the rollback did not happen")
     log("PASS cleanup: the checks left no test rows behind")
@@ -293,11 +298,79 @@ def cmd_verify_live(api: Api, ref: str, log=print, request: Callable[..., object
     log("PASS live: approved fixtures visible, draft hidden, no private columns or existing user rows visible")
 
 
+def cmd_verify_isolation(ref: str, log=print, request: Callable[..., object] | None = None,
+                         anon_key: str | None = None, new_id: Callable[[], str] | None = None) -> None:
+    """Two real anonymous sessions through the public REST API: A writes, B must see and change nothing.
+    Uses only the public key. A's rows are deleted at the end; the two anonymous users stay (a visitor
+    token cannot delete its own Auth user), which is harmless on staging."""
+    import uuid
+    anon = public_api_key(anon_key)
+    base = f"https://{ref}.supabase.co"
+    http = request or Api(anon)._http
+    new_id = new_id or (lambda: str(uuid.uuid4()))
+    story = sorted(_APPROVED_FIXTURES)[0]
+
+    def sign_in() -> tuple[str, dict]:
+        session = http("POST", base + "/auth/v1/signup", {}, {"apikey": anon})
+        if not session or not session.get("access_token") or not (session.get("user") or {}).get("id"):
+            raise StagingError("anonymous sign-in failed; enable anonymous sign-ins first")
+        return session["user"]["id"], {"apikey": anon, "Authorization": f"Bearer {session['access_token']}",
+                                       "Prefer": "return=representation"}
+
+    a_id, a = sign_in()
+    b_id, b = sign_in()
+    if a_id == b_id:
+        raise StagingError("two sign-ins returned the same user")
+
+    def rest(method, path, headers, body=None):
+        return http(method, f"{base}/rest/v1/{path}", body, headers)
+
+    def denied(method, path, headers, body=None) -> bool:
+        try:
+            rest(method, path, headers, body)
+        except StagingError as exc:
+            if "HTTP 401" in str(exc) or "HTTP 403" in str(exc):
+                return True
+            raise
+        return False
+
+    try:
+        fb = rest("POST", "feedback", a, {"user_id": a_id, "testimony_id": story, "action": "save", "request_id": new_id()})
+        rest("POST", "saved_testimonies", a, {"user_id": a_id, "testimony_id": story})
+        if not fb or len(rest("GET", "feedback?select=id", a) or []) != 1:
+            raise StagingError("user A cannot read back their own feedback")
+        if len(rest("GET", "saved_testimonies?select=user_id", a) or []) != 1:
+            raise StagingError("user A cannot read back their own saved item")
+        for table in ("feedback", "saved_testimonies", "feed_events", "user_profiles"):
+            if rest("GET", f"{table}?select=user_id", b):
+                raise StagingError(f"user B can read other users' rows in {table}")
+        if rest("PATCH", f"feedback?user_id=eq.{a_id}", b, {"action": "interested"}):
+            raise StagingError("user B modified user A's feedback")
+        if rest("DELETE", f"saved_testimonies?user_id=eq.{a_id}", b):
+            raise StagingError("user B deleted user A's saved item")
+        if not denied("POST", "feedback", b, {"user_id": a_id, "testimony_id": story, "action": "save", "request_id": new_id()}):
+            raise StagingError("user B inserted feedback as user A")
+        if not denied("POST", "saved_testimonies", b, {"user_id": a_id, "testimony_id": story}):
+            raise StagingError("user B inserted a saved item as user A")
+        if not denied("POST", "user_profiles", b, {"user_id": b_id, "consent_to_personalization": True}):
+            raise StagingError("a visitor wrote their own profile or consent directly (must be server-only)")
+        if len(rest("GET", "feedback?select=id", a) or []) != 1:
+            raise StagingError("user A's data changed after user B's attempts")
+    finally:
+        for table in ("feedback", "saved_testimonies"):
+            try:
+                rest("DELETE", f"{table}?user_id=eq.{a_id}", a)
+            except StagingError:
+                pass
+    log("PASS isolation: two anonymous sessions cannot read, change, delete or forge each other's rows; "
+        "visitors cannot write profile or consent directly")
+
+
 # ---------- CLI ----------
 
 def main(argv: list[str] | None = None, api: Api | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("command", choices=["status", "migrate", "verify", "seed-synthetic", "verify-live"])
+    ap.add_argument("command", choices=["status", "migrate", "verify", "seed-synthetic", "verify-live", "verify-isolation"])
     ap.add_argument("--project-ref", required=True, help="20-letter project ref of the staging project")
     ap.add_argument("--confirm-name", help="exact project name; required with --apply and for verify")
     ap.add_argument("--apply", action="store_true", help="actually write (migrate, seed-synthetic)")
@@ -320,6 +393,9 @@ def main(argv: list[str] | None = None, api: Api | None = None) -> int:
         elif args.command == "verify-live":
             anon = public_api_key(args.anon_key or os.environ.get("SUPABASE_ANON_KEY"))
             cmd_verify_live(api, args.project_ref, anon_key=anon)
+        elif args.command == "verify-isolation":
+            anon = public_api_key(args.anon_key or os.environ.get("SUPABASE_ANON_KEY"))
+            cmd_verify_isolation(args.project_ref, anon_key=anon)
     except StagingError as exc:
         print(f"REFUSED/FAILED: {exc}", file=sys.stderr)
         return 2

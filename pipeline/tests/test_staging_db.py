@@ -103,9 +103,9 @@ def test_migrate_applies_pending_in_order_and_records_each():
     api = FakeApi(applied={"20261114234000"})
     run = sdb.make_sql_runner(api, REF)
     applied = sdb.cmd_migrate(run, apply=True, log=lambda m: None)
-    assert applied == ["20261116040000", "20261116050000"]
+    assert applied == [v for v, _, _ in sdb.migration_files()][1:]
     inserts = [q for q in api.sql() if q.startswith("INSERT INTO") or "\nINSERT INTO supabase_migrations" in q]
-    assert len(inserts) == 2 and "20261116040000" in inserts[0] and "20261116050000" in inserts[1]
+    assert len(inserts) == len(applied) and all(v in q for v, q in zip(applied, inserts))
 
 
 def test_migrate_rerun_applies_nothing():
@@ -331,3 +331,86 @@ def test_public_key_accepts_legacy_anon_jwt_and_rejects_malformed_keys():
     for invalid in ("sb_secret_secret", "header.invalid.signature", "sb_publishable_"):
         with pytest.raises(sdb.StagingError, match="secret key"):
             sdb.public_api_key(invalid)
+
+
+# ---- verify-isolation (two real anonymous sessions) ----
+
+class FakeRestBackend:
+    """Models what RLS should do: each token sees and changes only its own rows; profiles are read-only."""
+
+    def __init__(self, leak_reads=False, allow_foreign_delete=False, allow_profile_write=False):
+        self.rows = {"feedback": [], "saved_testimonies": [], "feed_events": [], "user_profiles": []}
+        self.users, self.n = {}, 0
+        self.leak_reads, self.allow_foreign_delete, self.allow_profile_write = leak_reads, allow_foreign_delete, allow_profile_write
+
+    def __call__(self, method, url, body=None, headers=None):
+        if url.endswith("/auth/v1/signup"):
+            self.n += 1
+            uid, token = f"user-{self.n}", f"jwt-{self.n}"
+            self.users[token] = uid
+            return {"access_token": token, "user": {"id": uid}}
+        me = self.users[headers["Authorization"].split()[-1]]
+        path = url.split("/rest/v1/")[1]
+        table = path.split("?")[0]
+        owner = path.split("user_id=eq.")[1] if "user_id=eq." in path else None
+        if method == "GET":
+            return [r for r in self.rows[table] if self.leak_reads or r["user_id"] == me]
+        if method == "POST":
+            if table == "user_profiles" and not self.allow_profile_write or body["user_id"] != me:
+                raise sdb.StagingError("HTTP 403: new row violates row-level security policy")
+            self.rows[table].append(dict(body))
+            return [body]
+        mine_or_all = lambda r: r["user_id"] == owner and (r["user_id"] == me or self.allow_foreign_delete)
+        hit = [r for r in self.rows[table] if mine_or_all(r)]
+        if method == "PATCH":
+            for r in hit:
+                r.update(body)
+        if method == "DELETE":
+            self.rows[table] = [r for r in self.rows[table] if r not in hit]
+        return hit
+
+
+def run_isolation(backend):
+    logs = []
+    ids = iter(f"00000000-0000-4000-8000-{i:012d}" for i in range(100))
+    sdb.cmd_verify_isolation(REF, log=logs.append, request=backend, anon_key="sb_publishable_public",
+                             new_id=lambda: next(ids))
+    return logs
+
+
+def test_isolation_check_passes_against_a_backend_that_enforces_ownership():
+    backend = FakeRestBackend()
+    logs = run_isolation(backend)
+    assert logs and logs[0].startswith("PASS isolation")
+    assert backend.rows["feedback"] == [] and backend.rows["saved_testimonies"] == []  # cleaned up
+
+
+def test_isolation_check_catches_a_backend_that_leaks_reads():
+    with pytest.raises(sdb.StagingError, match="can read other users"):
+        run_isolation(FakeRestBackend(leak_reads=True))
+
+
+def test_isolation_check_catches_cross_user_deletes_and_direct_profile_writes():
+    with pytest.raises(sdb.StagingError, match="user B (modified|deleted) user A"):
+        run_isolation(FakeRestBackend(allow_foreign_delete=True))
+    with pytest.raises(sdb.StagingError, match="server-only"):
+        run_isolation(FakeRestBackend(allow_profile_write=True))
+
+
+def test_isolation_check_refuses_a_secret_key_and_needs_anonymous_sign_in(capsys):
+    assert sdb.main(["verify-isolation", "--project-ref", REF, "--anon-key", "sb_secret_abc"], api=FakeApi()) == 2
+    with pytest.raises(sdb.StagingError, match="sign-in failed"):
+        sdb.cmd_verify_isolation(REF, request=lambda *a, **k: {}, anon_key="sb_publishable_public")
+
+
+def test_verify_runs_the_consent_rules_and_checks_for_their_leftovers():
+    seen = []
+
+    def run(sql):
+        seen.append(sql)
+        if sql.startswith("SELECT count"):
+            assert all(f"0000000000d{i}" in sql for i in range(1, 5))
+            return [{"n": 0}]
+        raise sdb.StagingError(sdb.SENTINEL)
+    sdb.cmd_verify(run, log=lambda m: None)
+    assert any("profiles" in q and "consent_keep_text" in q for q in seen)
