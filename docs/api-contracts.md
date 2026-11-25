@@ -2,8 +2,9 @@
 
 These versioned contracts are intentionally **ahead of backend persistence** so frontend and backend can work in parallel. Types live in `web/lib/contracts.ts`. The `ApiClient` interface is implemented by an in-memory `MockApiClient` and an HTTP adapter.
 
-Only **GET /api/feed** has a flag-gated Next.js development route. All other routes
-below are contract specifications and require backend implementations before use.
+Only **GET /api/feed** has a flag-gated Next.js development route. `/api/session`, `/api/consent` (MUY-26) and
+`/api/profile` (MUY-27) are implemented. All other routes below are contract specifications and require backend
+implementations before use.
 
 ## Privacy / anonymous identity
 
@@ -12,6 +13,9 @@ below are contract specifications and require backend implementations before use
 - Two separate consents: `consentStorePreferences` authorizes durable preference vectors and saved preferences; `consentKeepText` additionally opts in to keeping the original description, and is valid only when preference storage is consented. **Default: do not persist raw free text.**
 - The profile backend must encrypt retained descriptions before database access and delete ciphertext when consent is withdrawn. See the [database guide](../supabase/README.md) for key and access requirements.
 - In the mock adapter, `saveProfile` returns a sanitized `profile` (without raw text unless consented), and `getProfile` returns only opt-in retained data. The API response must never echo a flagged description.
+- **MUY-27 behaviour** (see [session-and-consent.md](session-and-consent.md#profile-api-muy-27)): the server never claims
+  the description was screened. Automatic crisis-signal detection does not exist yet, so the real API always returns
+  `safetyState:"normal"` and never `feedMode:"support"`; the support-state paragraph below describes the mock only.
 - `ProfileResponse` includes `safetyState: "normal" | "support"` and `feedMode: "default" | "personalized" | "support"`. When safety checks signal support, drop the description without logging, storing, or embedding it; return `profile: null` and `feedMode: "support"`, then show support messaging before a curated feed. The mock detector is synthetic.
 - Raw descriptions must never go to analytics, client error capture, audit logs or third-party inference APIs.
 
@@ -23,9 +27,9 @@ below are contract specifications and require backend implementations before use
 | `/api/session` | POST | none | `{ "hasSession": true }` | Creates an anonymous session; same-origin only, 403 otherwise; 503 if Auth is unavailable |
 | `/api/consent` | GET | none | `{ "consent": { consentStorePreferences, consentKeepText } }` | 401 without a session; own flags only |
 | `/api/consent` | PUT | `{ consentStorePreferences, consentKeepText }` | `{ "consent": ... }` | 400 invalid (keep-text needs preference consent, unknown keys); 401; 403 cross-site; withdrawing clears what the consent covered |
-| `/api/profile` | GET | none | `ProfileResponse` | 401 if retained profile requires session; no retained profile returns `profile:null` |
-| `/api/profile` | PUT | `ProfileInput` | `ProfileResponse` | 400 invalid, 401 no session where needed; support state excludes raw description |
-| `/api/profile` | DELETE | none | `{ "ok": true }` | Idempotent deletion after anonymous-session authentication |
+| `/api/profile` | GET | none | `ProfileResponse` | No session or nothing retained: `profile:null`, `feedMode:"default"`. Returns the description only if the visitor opted in to keeping it; 503 `retention_unavailable` if it cannot be decrypted |
+| `/api/profile` | PUT | `ProfileInput` (max 16 KB) | `ProfileResponse` | 400 invalid (never echoes input); 401 if preferences are consented but there is no session; 403 cross-site; 503 `retention_unavailable` (missing key, nothing is written) or `profile_unavailable` |
+| `/api/profile` | DELETE | none | `{ "ok": true }` | Idempotent; 401 without a session; 403 cross-site. Removes the visitor's profile row, including preferences and retained ciphertext |
 | `/api/feed?limit=2&cursor=...` | GET | opaque `cursor`, limit 1–20 | `FeedResponse` | 400 invalid; stable ranked pagination and editorial fallback |
 | `/api/feed/events` | POST | `FeedEventRequest` | `FeedEventResponse` | 400 invalid/batch mismatch, 401 no session, 409 conflicting retry |
 | `/api/feedback` | POST | `FeedbackRequest` | `FeedbackResponse` | 400 invalid, 401, 404 missing story, 409 request-id conflict or stale undo |
