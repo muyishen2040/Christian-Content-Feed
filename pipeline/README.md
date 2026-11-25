@@ -95,6 +95,22 @@ python -m pipeline.importers.donghu --out batch.json
 - **Rows** are drafts with a placeholder excerpt and no topics. Our own summary and tags are a later step (MUY-49); these importers do not write one.
 - If Python reports `CERTIFICATE_VERIFY_FAILED` on macOS, the python.org install is missing its CA bundle: run its `Install Certificates.command`, or set `SSL_CERT_FILE=/etc/ssl/cert.pem` for the run. Do not disable verification.
 
+## Normalize, deduplicate and tag: `enrich.py` (MUY-17)
+
+Runs between an importer and the loader. Input and output are the same batch shape, so `loader.py` accepts the output unchanged. Pure and deterministic (no network, database or clock); running it on its own output changes nothing.
+
+```sh
+python -m pipeline.importers.luke54 --limit 100 --out luke54.json
+python -m pipeline.enrich luke54.json --out luke54.enriched.json --review-out review_queue.json \
+    --known donghu.json canaan.json        # optional: other batches to match against
+python -m pipeline.loader luke54.enriched.json --source-key luke54   # dry run, as before
+```
+
+- **Titles**: fullwidth letters and digits become ASCII, whitespace and zero-width characters are cleaned, spaces between Chinese characters and repeated punctuation are removed. Traditional/Simplified is never converted for display. The importer's title is kept in `raw_title` (a non-column field the loader drops). A person-written `excerpt` is only whitespace-cleaned.
+- **Duplicates**: rows with the same normalized URL (https, no `www`, no tracking parameters, sorted query, no fragment or trailing slash) collapse to one record; the first by `external_id` wins and the others are listed in `stats.duplicates_collapsed`. Titles that match after folding script, width and punctuation (or are at least 88% similar, and at least 6 characters) are **not** removed: both rows stay, get the `possible_duplicate` flag, and the pair goes to `stats.review_queue` / `--review-out` (ids only). The Simplified-to-Traditional fold is a small built-in table for matching only; extend `_FOLD_PAIRS` when a miss shows up.
+- **Tags**: `taxonomy.py` is a fixed vocabulary (slugs stored in `topics`, Traditional and Simplified labels, keywords matched against the title only). No match leaves `topics` empty and sets the `untagged` flag; topics already set on a row are kept. The vocabulary is proposed and not final.
+- **Safety**: a title that matches the crisis patterns is held out of the batch (id only in `stats.held_for_review`). `review_flags` (`possible_duplicate`, `untagged`) are advisory and not table columns. A row with body text, an author field, or a status other than pending/draft makes the run refuse. Statuses, hashes, external ids, URLs and rights are never changed, and the loader still forces drafts and skips existing rows. Logs are counts only.
+
 ## Loader: `loader.py`
 
 Loads a batch written by an importer (`--out`) into the `sources` and `testimonies` tables.
