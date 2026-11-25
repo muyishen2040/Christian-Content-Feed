@@ -47,5 +47,6 @@ Force-push or rewrite shared history; approve PRs; contact publishers; make the 
 
 ## Commands
 
+- Before committing and pushing, follow `docs/agent-workflow.md` (a committed git hook runs the CI checks; enable it with `bash scripts/setup-hooks.sh`).
 - Python tests: `python -m pytest pipeline/tests` (see `docs/setup.md` for web checks).
 - Keep the cloud environment's network on Limited with exact hosts; add every site needed in one change.
