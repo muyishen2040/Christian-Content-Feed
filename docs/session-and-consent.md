@@ -37,10 +37,44 @@ set the visitor's own flags (`PUT` body: exactly those two booleans, max 1 KB, u
 without `consent_to_personalization` the table refuses topics, a preference vector or retained text; without
 `consent_keep_text` it refuses retained text; keep-text consent without preference consent is refused. Withdrawing
 consent therefore has to clear what it covered, and the API does that (`web/lib/consent.ts`). Raw description text
-is never stored in a column that is not ciphertext; the profile API that writes it is MUY-27.
+is never stored in a column that is not ciphertext; the profile API that writes it is described below.
 
 Without consent a visitor can still use the app: preferences exist only for that page session, nothing durable is
 written to user tables.
+
+## Profile API (MUY-27)
+
+`GET`, `PUT` and `DELETE /api/profile` (`web/lib/profile-api.ts`; real wiring in `web/lib/profile-server.ts`). `PUT` is a
+full replacement of `ProfileInput`, so an edit is the same call.
+
+- **Empty is valid.** A null or blank description, no topics, or no consent is a `200` with `feedMode:"default"`,
+  never a validation error. Invalid input (over 2000 characters, over 12 topics, unknown keys, bad enums, body over
+  16 KB, keep-text without preference consent) is `400` with a generic message that does not quote the input.
+- **Consent decides what is kept.** Without `consentStorePreferences` nothing is written except the withdrawal of
+  earlier consent (the same clearing as `PUT /api/consent`), the embedding service is not called and no session is
+  needed. With it, a session is required (`401` otherwise) and topics and the preference vector are saved.
+- **Preference vector.** The description is embedded in memory by our private embedding service (Samuel's
+  `embedding-client.ts`, no third-party AI API) and only the vector is stored, with `preference_model_version` =
+  `model@revision/export_revision`. Replacing the description replaces the vector; a null description clears it.
+  `feedMode` is `personalized` when a vector or topics are stored, else `default`.
+- **ML service down or invalid answer.** The save still succeeds with no vector and `feedMode:"default"`. The text is
+  not queued, logged or stored for retry; the visitor can resubmit.
+- **Retained description (explicit opt-in only).** `profile-crypto.ts` settles the key scheme: AES-256-GCM, a random
+  nonce per write, the user id as authenticated data (a copy moved to another row will not decrypt), and a 32-byte
+  base64 key in the server-only environment variable `PROFILE_DESCRIPTION_KEY`, never in the database. The text is
+  encrypted before any database call. A missing or malformed key fails the request with `503 retention_unavailable`
+  before the text goes to the embedding service or the database, and `GET` fails the same way rather than return no
+  text. Decryption happens only after the session is verified and only for that user's own row. Withdrawing keep-text
+  consent, withdrawing preference consent or `DELETE /api/profile` removes the ciphertext. The key has no rotation or
+  versioning yet: rotating it makes existing ciphertext unreadable, so it needs a re-encryption step first.
+- **Age range and gender** are accepted by the schema but discarded: no column exists, they are never stored, logged or
+  used in scoring.
+- **No safety claim.** The API does not screen descriptions for crisis signals (that is post-MVP) and always returns
+  `safetyState:"normal"`. Handlers never log; errors from the database, Auth or the encryption module are replaced by
+  generic `503` bodies, because they can contain submitted values.
+- `DELETE /api/profile` deletes the profile row and keeps the anonymous session. Deleting the Auth user and
+  owned feedback and saved items is MUY-34.
+- Missing from this ticket: per-visitor rate limiting of `PUT` (it calls the ML service). Configure it before the pilot.
 
 ## When the browser identity expires or is cleared
 
@@ -72,6 +106,10 @@ Anonymous sign-ins must be enabled in the Supabase project (Authentication > Sig
 
 ## How it is tested
 
+`web/tests/profile-api.test.mjs` covers the profile handlers (limits, consent, vector versioning, opt-in retention,
+withdrawal, deletion, missing key, ML outage, log redaction), with a stand-in for the crypto module; the real
+encryption is tested by `npm run test:profile-crypto`.
+
 - `web/tests/session-consent.test.mjs`: consent rules, same-origin check, session and consent handlers (fakes, no network).
 - `supabase/tests/consent.sql`: the database consent constraints, plus visitors reading their own flags but not
   writing them or reading the ciphertext. Runs in CI (`supabase-rls.yml`) and through `staging_db.py verify`.
@@ -88,6 +126,5 @@ python3 supabase/scripts/staging_db.py verify-isolation --project-ref $REF --ano
 
 ## Not in this ticket
 
-Profile onboarding writes (MUY-27), feedback and Saved persistence (MUY-29), feed (MUY-28) and reset/deletion
-(MUY-34) build on this. Until MUY-27 and MUY-29 land, only the consent flags persist across a refresh; saved
-stories and preference vectors are not yet written by any route.
+Feedback and Saved persistence (MUY-29), feed (MUY-28) and reset/deletion
+(MUY-34) build on this. Until MUY-29 lands, saved stories are not yet written by any route.

@@ -41,7 +41,7 @@ async function visitorClient(): Promise<SupabaseClient> {
 
 /** Service-role client. Server-only, and only ever used with a user id taken from a verified
  * session. The key never reaches the browser and is never logged. */
-function adminClient(): SupabaseClient {
+export function adminClient(): SupabaseClient {
   const { url } = publicConfig();
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("Supabase service role is not configured");
