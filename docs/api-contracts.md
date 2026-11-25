@@ -19,6 +19,10 @@ below are contract specifications and require backend implementations before use
 
 | Route | Method | Request | Response | Ownership / errors |
 | --- | --- | --- | --- | --- |
+| `/api/session` | GET | none | `{ "hasSession": boolean }` | Never creates a session (see [session-and-consent.md](session-and-consent.md)) |
+| `/api/session` | POST | none | `{ "hasSession": true }` | Creates an anonymous session; same-origin only, 403 otherwise; 503 if Auth is unavailable |
+| `/api/consent` | GET | none | `{ "consent": { consentStorePreferences, consentKeepText } }` | 401 without a session; own flags only |
+| `/api/consent` | PUT | `{ consentStorePreferences, consentKeepText }` | `{ "consent": ... }` | 400 invalid (keep-text needs preference consent, unknown keys); 401; 403 cross-site; withdrawing clears what the consent covered |
 | `/api/profile` | GET | none | `ProfileResponse` | 401 if retained profile requires session; no retained profile returns `profile:null` |
 | `/api/profile` | PUT | `ProfileInput` | `ProfileResponse` | 400 invalid, 401 no session where needed; support state excludes raw description |
 | `/api/profile` | DELETE | none | `{ "ok": true }` | Idempotent deletion after anonymous-session authentication |
