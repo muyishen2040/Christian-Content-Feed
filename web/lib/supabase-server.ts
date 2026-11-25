@@ -1,12 +1,8 @@
 import "server-only";
 
 import { createServerClient } from "@supabase/ssr";
-import {
-  createClient,
-  isAuthRetryableFetchError,
-  isAuthSessionMissingError,
-  type SupabaseClient,
-} from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { isTemporaryAuthError } from "./auth-errors.ts";
 import { cookies } from "next/headers";
 import {
   consentFromRow,
@@ -50,17 +46,6 @@ function adminClient(): SupabaseClient {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("Supabase service role is not configured");
   return createClient(url, key, { auth: { persistSession: false } });
-}
-
-/** True for failures that say nothing about the visitor's session: network errors and 5xx/429. */
-function isTemporaryAuthError(error: {
-  status?: number;
-  name?: string;
-}): boolean {
-  if (isAuthRetryableFetchError(error)) return true;
-  const status = error.status;
-  if (status === undefined) return !isAuthSessionMissingError(error);
-  return status === 0 || status === 429 || status >= 500;
 }
 
 export function createSessionDeps(): SessionDeps {
