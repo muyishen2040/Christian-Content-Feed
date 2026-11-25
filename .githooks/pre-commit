@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Runs the same checks as CI, but only for the areas that have staged files, so a docs-only commit is
+# not slowed. Skip deliberately with `git commit --no-verify` (for example a WIP commit on your own
+# branch); the checks must still pass before you push.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+fail() { echo "pre-commit: $1 failed. Fix it, or commit with --no-verify if you mean to." >&2; exit 1; }
+
+if grep -qE '^web/' <<<"$staged"; then
+  echo "pre-commit: web checks"
+  (cd web && npm run --silent format:check && npm run --silent typecheck && npm run --silent lint && npm test --silent) \
+    || fail "web checks"
+fi
+
+if grep -qE '^(pipeline/|supabase/scripts/|pytest\.ini)' <<<"$staged"; then
+  echo "pre-commit: python tests"
+  python3 -m pytest pipeline/tests -q || fail "python tests"
+fi
