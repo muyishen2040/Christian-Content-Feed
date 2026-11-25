@@ -34,10 +34,15 @@ function fake(result, writes = []) {
 }
 
 test("a refresh conflict (409) returns a retryable error and keeps the cookies", async () => {
-  const clear = [{ name: "sb-test-auth-token", value: "", options: { maxAge: 0 } }];
+  const clear = [
+    { name: "sb-test-auth-token", value: "", options: { maxAge: 0 } },
+  ];
   const res = await refreshSession(
     request(),
-    fake({ data: { user: null }, error: { status: 409, name: "AuthApiError" } }, clear),
+    fake(
+      { data: { user: null }, error: { status: 409, name: "AuthApiError" } },
+      clear,
+    ),
   );
   assert.equal(res.status, 503);
   assert.equal(res.headers.get("Retry-After"), "1");
@@ -50,7 +55,10 @@ test("network errors and 5xx also keep the session", async () => {
     { status: 500, name: "AuthApiError" },
     { status: 0, name: "AuthRetryableFetchError" },
   ]) {
-    const res = await refreshSession(request(), fake({ data: { user: null }, error }));
+    const res = await refreshSession(
+      request(),
+      fake({ data: { user: null }, error }),
+    );
     assert.equal(res.status, 503);
   }
 });
@@ -68,10 +76,15 @@ test("a successful refresh passes the request on with rewritten cookies", async 
 });
 
 test("an invalid token is not a temporary error: cookies are cleared as the client asks", async () => {
-  const clear = [{ name: "sb-test-auth-token", value: "", options: { maxAge: 0 } }];
+  const clear = [
+    { name: "sb-test-auth-token", value: "", options: { maxAge: 0 } },
+  ];
   const res = await refreshSession(
     request(),
-    fake({ data: { user: null }, error: { status: 401, name: "AuthApiError" } }, clear),
+    fake(
+      { data: { user: null }, error: { status: 401, name: "AuthApiError" } },
+      clear,
+    ),
   );
   assert.equal(res.status, 200);
   assert.match(res.headers.get("set-cookie") ?? "", /sb-test-auth-token=;/);
