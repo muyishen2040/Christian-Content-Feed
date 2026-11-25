@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5f0">
+  <title>見證故事 · 故事卡片</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-bookmark" viewBox="0 0 24 24"><path d="M6.75 4.5a1.75 1.75 0 0 1 1.75-1.75h7a1.75 1.75 0 0 1 1.75 1.75v16l-5.25-3.6-5.25 3.6z"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M4.5 12h14M13 6.5l5.5 5.5-5.5 5.5"/></symbol>
+    <symbol id="icon-back" viewBox="0 0 24 24"><path d="M19 12H5m6-6-6 6 6 6"/></symbol>
+  </svg>
+
+  <div class="app-shell">
+    <main class="layout">
+      <section class="experience" aria-label="探索故事卡片">
+        <div id="deckStage" class="deck-stage">
+          <div class="stack-card stack-back" aria-hidden="true"><div class="stack-art"></div></div>
+          <div class="stack-card stack-middle" aria-hidden="true"><div class="stack-art"></div></div>
+          <article id="storyCard" class="story-card" tabindex="0" role="button" aria-label="閱讀故事">
+            <div class="cover" id="cover"><div class="cover-overlay"></div><span class="stamp stamp-pass">先略過</span><span class="stamp stamp-save">收藏</span></div>
+            <div class="card-content"><div class="story-meta"><span id="topic"></span></div><h3 id="cardTitle"></h3><p id="cardSummary"></p><div class="card-footer"><span>虛構故事</span><svg><use href="#icon-arrow"></use></svg></div></div>
+          </article>
+          <div class="end-card" id="endCard" hidden><div class="end-icon"><svg><use href="#icon-bookmark"></use></svg></div><h3>故事都看完了</h3><p>回頭看看收藏的故事，或重新瀏覽。</p><div class="end-actions"><button type="button" id="restartButton" class="secondary-button">重新瀏覽</button><button type="button" id="savedAtEnd" class="primary-button">我的收藏</button></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="readDialog" class="panel-dialog"><div class="dialog-inner reading"><div class="dialog-top"><button class="text-button" id="closeReading" type="button"><svg><use href="#icon-back"></use></svg>回到故事</button><span>虛構故事</span></div><div class="reading-body"><p class="section-label" id="readingTopic"></p><h2 id="readingTitle"></h2><p class="reading-lead" id="readingLead"></p><div class="reading-rule"></div><div id="readingText"></div><p class="reading-end">— 完 —</p></div><div class="reading-footer"><button class="secondary-button" id="closeReadFooter" type="button">繼續探索</button><button class="primary-button" id="saveFromReading" type="button"><svg><use href="#icon-bookmark"></use></svg><span>收藏這篇</span></button></div></div></dialog>
+  <dialog id="savedDialog" class="panel-dialog"><div class="dialog-inner saved-panel"><div class="dialog-top"><button class="text-button" id="closeSaved" type="button"><svg><use href="#icon-back"></use></svg>回到故事</button><span>我的收藏</span></div><div class="saved-body"><p class="section-label">留給以後的時間</p><h2>我的收藏</h2><p class="saved-description">那些想再回來讀的故事，都在這裡。</p><div id="savedList" class="saved-list"></div></div></div></dialog>
+  <div class="sr-only" id="announce" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
