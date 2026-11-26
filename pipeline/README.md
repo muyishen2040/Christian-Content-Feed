@@ -101,15 +101,17 @@ Runs between an importer and the loader. Input and output are the same batch sha
 
 ```sh
 python -m pipeline.importers.luke54 --limit 100 --out luke54.json
-python -m pipeline.enrich luke54.json --out luke54.enriched.json --review-out review_queue.json \
+python -m pipeline.enrich luke54.json --out luke54.enriched.json --review-out review_queue.json --sidecar-out luke54.sidecar.json \
     --known donghu.json canaan.json        # optional: other batches to match against
 python -m pipeline.loader luke54.enriched.json --source-key luke54   # dry run, as before
 ```
 
 - **Titles**: fullwidth letters and digits become ASCII, whitespace and zero-width characters are cleaned, spaces between Chinese characters and repeated punctuation are removed. Traditional/Simplified is never converted for display. The importer's title is kept in `raw_title` (a non-column field the loader drops). A person-written `excerpt` is only whitespace-cleaned.
 - **Duplicates**: rows with the same normalized URL (https, no `www`, no tracking parameters, sorted query, no fragment or trailing slash) collapse to one record; the first by `external_id` wins and the others are listed in `stats.duplicates_collapsed`. Titles that match after folding script, width and punctuation (or are at least 88% similar, and at least 6 characters) are **not** removed: both rows stay, get the `possible_duplicate` flag, and the pair goes to `stats.review_queue` / `--review-out` (ids only). The Simplified-to-Traditional fold is a small built-in table for matching only; extend `_FOLD_PAIRS` when a miss shows up.
+- **Keeping what the loader drops**: `raw_title` and `review_flags` are not table columns. `--sidecar-out` writes them by `external_id` (with the review queue and collapsed/held ids) to a working file; it holds no URLs or text. Write it, and the batch files, outside the repo or under `pipeline/work/` (gitignored), and never commit them (a test checks this). If reviewers need these in the database, that is a schema change for the people to decide; none is made here.
+- **Missing URL**: some Canaan catalog entries have no article link. They are kept, flagged `missing_url`, and are not URL-matched (title matching still applies).
 - **Tags**: `taxonomy.py` is a fixed vocabulary (slugs stored in `topics`, Traditional and Simplified labels, keywords matched against the title only). No match leaves `topics` empty and sets the `untagged` flag; topics already set on a row are kept. The vocabulary is proposed and not final.
-- **Safety**: a title that matches the crisis patterns is held out of the batch (id only in `stats.held_for_review`). `review_flags` (`possible_duplicate`, `untagged`) are advisory and not table columns. A row with body text, an author field, or a status other than pending/draft makes the run refuse. Statuses, hashes, external ids, URLs and rights are never changed, and the loader still forces drafts and skips existing rows. Logs are counts only.
+- **Safety**: a title that matches the crisis patterns is held out of the batch (id only in `stats.held_for_review`). `review_flags` (`missing_url`, `possible_duplicate`, `untagged`) are advisory and not table columns. A row with body text, an author field, or a status other than pending/draft makes the run refuse. Statuses, hashes, external ids, URLs and rights are never changed, and the loader still forces drafts and skips existing rows. Logs are counts only.
 
 ## Loader: `loader.py`
 

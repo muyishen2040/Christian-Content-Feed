@@ -17,7 +17,7 @@ What it does to each row:
   to `stats.review_queue` for a person.
 - sets `topics` from the fixed vocabulary in taxonomy.py; no match leaves `topics` empty and counts
   it as untagged. Human-set topics already on a row are kept.
-- sets the non-column `review_flags` (`crisis_adjacent`, `possible_duplicate`, `untagged`). A title
+- sets the non-column `review_flags` (`missing_url`, `possible_duplicate`, `untagged`). A title
   that matches crisis patterns is held out of the batch (id only in `stats.held_for_review`).
 
 What it never does: touch statuses, hashes, external ids, URLs, or rights; store body text or
@@ -84,10 +84,22 @@ def title_key(value: str) -> str:
     return _DROP_IN_KEY.sub("", text)
 
 
-def normalize_url(url: str) -> str:
+def normalize_url(url: str | None) -> str:
     """Canonical form for duplicate detection: https, lowercase host without www, no fragment,
-    tracking parameters removed, remaining parameters sorted, no trailing slash."""
+    tracking parameters removed, remaining parameters sorted, no trailing slash. A missing, blank
+    or unparseable URL gives "" (some Canaan catalog entries have no article link)."""
+    try:
+        return _normalize_url(url)
+    except ValueError:
+        return ""
+
+
+def _normalize_url(url: str | None) -> str:
+    if not url or not url.strip():
+        return ""
     parts = urlsplit(url.strip())
+    if not parts.hostname:
+        return ""
     host = (parts.hostname or "").lower().removeprefix("www.")
     if parts.port and parts.port not in (80, 443):
         host = f"{host}:{parts.port}"
@@ -120,6 +132,7 @@ def enrich_batch(batch: dict, known: list[dict] | None = None) -> tuple[dict, li
     stats = out.setdefault("stats", {})
     queue: list[dict] = []
     stats.setdefault("held_for_review", [])
+    stats.setdefault("rejected", {})
     collapsed: list[str] = list(stats.get("duplicates_collapsed", []))
 
     rows = sorted(out.get("testimonies", []), key=lambda r: r["external_id"])
@@ -131,7 +144,8 @@ def enrich_batch(batch: dict, known: list[dict] | None = None) -> tuple[dict, li
     pool: list[tuple[str, str, str]] = []
     for k in known or []:
         for r in sorted(k.get("testimonies", []), key=lambda r: r["external_id"]):
-            seen_urls.setdefault(normalize_url(r["source_url"]), r["external_id"])
+            if normalize_url(r.get("source_url")):
+                seen_urls.setdefault(normalize_url(r["source_url"]), r["external_id"])
             pool.append((r["external_id"], r.get("source_key", ""), title_key(r.get("raw_title") or r["title"])))
 
     kept: list[dict] = []
@@ -141,11 +155,15 @@ def enrich_batch(batch: dict, known: list[dict] | None = None) -> tuple[dict, li
         title = clean_title(raw)
         if not title:
             raise EnrichRefused(f"{r['external_id']}: empty title after cleaning")
-        url_key = normalize_url(r["source_url"])
-        if url_key in seen_urls:
+        url_key = normalize_url(r.get("source_url"))
+        flags: list[str] = []
+        if not url_key:
+            flags.append("missing_url")  # kept, and flagged for a person: it cannot be matched by URL
+        elif url_key in seen_urls:
             collapsed.append(r["external_id"])
             continue
-        seen_urls[url_key] = r["external_id"]
+        else:
+            seen_urls[url_key] = r["external_id"]
 
         verdict = common.classify(title)
         if verdict.decision == "hold":
@@ -158,7 +176,6 @@ def enrich_batch(batch: dict, known: list[dict] | None = None) -> tuple[dict, li
             continue
 
         key = title_key(title)
-        flags: list[str] = []
         for other_id, other_src, other_key in pool:
             if min(len(key), len(other_key)) < MIN_KEY_LEN:
                 continue
@@ -193,12 +210,27 @@ def enrich_batch(batch: dict, known: list[dict] | None = None) -> tuple[dict, li
     return out, queue
 
 
+def sidecar(batch: dict) -> dict:
+    """What the loader drops, kept for reviewers: original title and flags by (source_key, external_id),
+    plus the review queue and collapsed/held ids. Ids and the importer's own title only: no URLs, no
+    text. A working file: keep it outside the repo or under the ignored `pipeline/work/`."""
+    st = batch["stats"]
+    return {
+        "rows": {r["external_id"]: {"source_key": r.get("source_key", ""), "raw_title": r["raw_title"],
+                                    "review_flags": r["review_flags"]} for r in batch["testimonies"]},
+        "review_queue": st["review_queue"], "duplicates_collapsed": st["duplicates_collapsed"],
+        "held_for_review": st["held_for_review"],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("batch", type=Path)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--known", type=Path, nargs="*", default=[], help="other batches to match against")
     ap.add_argument("--review-out", type=Path, help="write the review queue (ids only) here")
+    ap.add_argument("--sidecar-out", type=Path, help="write original titles and review flags by id here "
+                    "(a working file: outside the repo or under pipeline/work/, never committed)")
     args = ap.parse_args(argv)
     read = lambda p: json.loads(p.read_text(encoding="utf-8"))  # noqa: E731
     try:
@@ -207,6 +239,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2
     args.out.write_text(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if args.sidecar_out:
+        args.sidecar_out.write_text(json.dumps(sidecar(out), ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.review_out:
         args.review_out.write_text(json.dumps(queue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     s = out["stats"]

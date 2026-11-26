@@ -164,3 +164,45 @@ def test_cli_writes_outputs_and_logs_counts_only(tmp_path, capsys):
     printed = capsys.readouterr().out
     assert "癌症" not in printed and "x.org" not in printed and '"rows": 1' in printed
     assert json.loads((tmp_path / "q.json").read_text()) == []
+
+
+def test_missing_or_blank_url_is_flagged_not_dropped_or_crashing():
+    b = batch(row("a", "沒有連結的文章一", None), row("b", "沒有連結的文章二", "  "), row("c", "有連結的文章三", "https://x.org/1"))
+    out, _ = enrich.enrich_batch(b)
+    flags = {r["external_id"]: r["review_flags"] for r in out["testimonies"]}
+    assert "missing_url" in flags["a"] and "missing_url" in flags["b"] and "missing_url" not in flags["c"]
+    assert out["stats"]["duplicates_collapsed"] == []  # two url-less rows are not "the same URL"
+    assert enrich.normalize_url("http://x.org:badport/a") == ""
+
+
+def test_enrichment_runs_on_the_real_canaan_fixture():
+    from pipeline.importers import canaan_magazine as m
+    html = (Path(__file__).parents[1] / "fixtures" / "canaan_magazine_range_sample.html").read_text(encoding="utf-8")
+    src = m.build_batch({1: html})
+    assert any(not r["source_url"] for r in src["testimonies"])  # the fixture has an entry without a link
+    out, _ = enrich.enrich_batch(src)
+    assert any("missing_url" in r["review_flags"] for r in out["testimonies"])
+    assert len(out["testimonies"]) + len(out["stats"]["held_for_review"]) \
+        + sum(out["stats"]["rejected"].values()) + len(out["stats"]["duplicates_collapsed"]) >= len(src["testimonies"])
+    assert enrich.enrich_batch(out)[0] == out
+
+
+def test_sidecar_keeps_original_title_and_flags_without_urls_or_text(tmp_path):
+    p = tmp_path / "b.json"
+    p.write_text(json.dumps(batch(row("a", "  癌症中的醫治 ", "https://x.org/1"))), encoding="utf-8")
+    assert enrich.main([str(p), "--out", str(tmp_path / "o.json"), "--sidecar-out", str(tmp_path / "s.json")]) == 0
+    side = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))
+    assert side["rows"]["a"] == {"source_key": "src_a", "raw_title": "  癌症中的醫治 ", "review_flags": []}
+    assert "x.org" not in json.dumps(side)
+
+
+def test_working_files_are_ignored_and_no_batch_is_tracked():
+    import subprocess
+    root = Path(__file__).parents[2]
+    for path in ("pipeline/work/b.json", "x.sidecar.json", "x.enriched.json"):
+        code = subprocess.run(["git", "check-ignore", "-q", path], cwd=root).returncode
+        if code == 128:
+            pytest.skip("not a git checkout")
+        assert code == 0, path
+    tracked = subprocess.run(["git", "ls-files", "pipeline"], cwd=root, capture_output=True, text=True).stdout.split()
+    assert not [f for f in tracked if f.endswith((".sidecar.json", ".enriched.json")) or "/work/" in f]
