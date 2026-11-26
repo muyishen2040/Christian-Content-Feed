@@ -14,3 +14,8 @@ ml-service/evaluation/results/qualitative.json
 ml-service/evaluation/results/bge.json
 ml-service/evaluation/results/e5.json
 ml-service/model_assets/
+
+# Working files from importers and enrich (batches, sidecars); never commit
+pipeline/work/
+*.enriched.json
+*.sidecar.json
